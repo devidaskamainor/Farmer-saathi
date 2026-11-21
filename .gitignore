@@ -1,11 +1,83 @@
+# Dependencies
 node_modules/
+/.pnp
+.pnp.js
+jspm_packages/
+
+# Production & Build outputs
 dist/
+build/
+out/
+.next/
+.output/
+.parcel-cache/
+.vite/
+
+# Environment Variables & Secrets
 .env
 .env.*
+*.env
+*.local
 !.env.example
 !client/.env.example
+!server/.env.example
+service-account*.json
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing & Code Coverage
 coverage/
+.nyc_output/
+.cache/
+
+# Database Dumps & Backups
 *.dump
 *.backup
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+
+# Operating System Files
 .DS_Store
-npm-debug.log*
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDEs & Editor Temporary Files
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Temporary Files & Archives
+*.tmp
+*.temp
+*.bak
