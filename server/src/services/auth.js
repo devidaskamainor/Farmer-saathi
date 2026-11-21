@@ -3,20 +3,11 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { HttpError } from '../utils/http.js';
 import { createSessionToken, hashSessionToken, SESSION_DURATION_DAYS } from './authSessions.js';
 import { getFarmerById, mapFarmer } from './farmerProfiles.js';
+import { normalizeEmail, validateEmailAddress, validateSocialAccount } from './emailValidator.js';
+
+export { normalizeEmail, validateEmailAddress, validateSocialAccount };
 
 const bcryptRounds = 12;
-
-export function normalizeEmail(email) {
-  return String(email || '').trim().toLowerCase();
-}
-
-export function validateEmailAddress(email) {
-  const normalizedEmail = normalizeEmail(email);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || normalizedEmail.length > 254) {
-    throw new HttpError(400, 'Enter a valid email address.');
-  }
-  return normalizedEmail;
-}
 
 export function validateNewPassword(password) {
   const passwordBytes = typeof password === 'string' ? Buffer.byteLength(password, 'utf8') : 0;
@@ -59,10 +50,10 @@ export async function registerAccount(pool, { email, password, profile }) {
 }
 
 export async function loginAccount(pool, { email, password }) {
-  const normalizedEmail = normalizeEmail(email);
-  if (!normalizedEmail || typeof password !== 'string' || password.length === 0) {
+  if (!email || typeof password !== 'string' || password.length === 0) {
     throw new HttpError(400, 'Enter your email address and password.');
   }
+  const normalizedEmail = validateEmailAddress(email);
   const { rows } = await pool.query(
     'select id, email, password_hash, email_verified_at from app_users where lower(email) = $1',
     [normalizedEmail]
@@ -230,10 +221,7 @@ export async function deleteSession(pool, token) {
 }
 
 export async function authenticateSocialAccount(pool, { provider, email, name, preferredLanguage }) {
-  if (!provider || !['google', 'facebook'].includes(String(provider).toLowerCase())) {
-    throw new HttpError(400, 'Supported social providers are Google and Facebook.');
-  }
-  const normalizedEmail = validateEmailAddress(email);
+  const normalizedEmail = validateSocialAccount(provider, { email });
   const client = await pool.connect();
   try {
     await client.query('begin');

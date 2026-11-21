@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { api, errorMessage } from '../services/api.js';
 import { createSpeechRecognition, speakText, stopSpeaking } from '../services/voice.js';
+import { validateEmailClient, validateSocialLoginClient } from '../services/emailValidator.js';
 import { getLanguageDefinition, languageConfig, languageOptions, supportedLanguageCodes } from '../config/languages.js';
 import { words, serviceCopy, defaultServiceItems, assistantCopy, schemesCopy, schemeDetailLabels, schemeExtraLabels } from '../config/translations.js';
 import { authCopy, authHelpContent, verificationCopy, passwordResetCopy, registrationQuestions } from '../config/authTranslations.js';
@@ -317,7 +318,10 @@ function getStoredSocialAccounts() {
     const stored = localStorage.getItem(STORAGE_SOCIAL_ACCOUNTS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const clean = parsed.filter(a => a?.email && validateEmailClient(a.email).valid);
+        if (clean.length > 0) return clean;
+      }
     }
   } catch {}
   return [
@@ -327,6 +331,7 @@ function getStoredSocialAccounts() {
 
 function saveStoredSocialAccount(account) {
   try {
+    if (!account?.email || !validateEmailClient(account.email).valid) return;
     const current = getStoredSocialAccounts().filter(a => a.email.toLowerCase() !== account.email.toLowerCase());
     const updated = [account, ...current].slice(0, 5);
     localStorage.setItem(STORAGE_SOCIAL_ACCOUNTS_KEY, JSON.stringify(updated));
@@ -339,6 +344,7 @@ function SocialAccountModal({ provider, language, copy, busy, onSelect, onClose 
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
   const [customName, setCustomName] = useState('');
+  const [customError, setCustomError] = useState('');
 
   const title = isGoogle
     ? (language === 'kn' ? 'ಖಾತೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ' : language === 'hi' ? 'खाता चुनें' : language === 'mr' ? 'खाते निवडा' : 'Choose an account')
@@ -358,10 +364,15 @@ function SocialAccountModal({ provider, language, copy, busy, onSelect, onClose 
 
   function submitCustom(e) {
     e.preventDefault();
-    if (!customEmail.trim()) return;
+    setCustomError('');
+    const check = validateSocialLoginClient(provider, customEmail, language);
+    if (!check.valid) {
+      setCustomError(check.error);
+      return;
+    }
     onSelect({
-      email: customEmail.trim(),
-      name: customName.trim() || customEmail.trim().split('@')[0],
+      email: check.email,
+      name: customName.trim() || check.email.split('@')[0],
       avatarColor: isGoogle ? '#4285f4' : '#1877f2'
     });
   }
@@ -383,7 +394,14 @@ function SocialAccountModal({ provider, language, copy, busy, onSelect, onClose 
           type="button"
           key={acc.email}
           className="social-account-item"
-          onClick={() => onSelect(acc)}
+          onClick={() => {
+            const check = validateSocialLoginClient(provider, acc.email, language);
+            if (!check.valid) {
+              setCustomError(check.error);
+              return;
+            }
+            onSelect(acc);
+          }}
           disabled={busy}
         >
           <span className="social-account-avatar" style={{ background: acc.avatarColor || (isGoogle ? '#ea4335' : '#1877f2') }}>
@@ -396,11 +414,13 @@ function SocialAccountModal({ provider, language, copy, busy, onSelect, onClose 
           <ChevronLeft className="social-account-chevron" style={{ transform: 'rotate(180deg)' }} size={16} />
         </button>)}
 
+        {customError && <div className="alert alert-error" style={{ margin: '6px 0', fontSize: '12px' }}><FileWarning size={14} />{customError}</div>}
+
         {!showCustomInput ? (
           <button
             type="button"
             className="social-account-custom-toggle"
-            onClick={() => setShowCustomInput(true)}
+            onClick={() => { setShowCustomInput(true); setCustomError(''); }}
             disabled={busy}
           >
             <span className="social-account-custom-icon"><UserRound size={18} /></span>
@@ -413,7 +433,7 @@ function SocialAccountModal({ provider, language, copy, busy, onSelect, onClose 
               className="social-account-custom-input"
               placeholder={language === 'hi' ? 'ईमेल पता दर्ज करें' : language === 'kn' ? 'ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ನಮೂದಿಸಿ' : 'Enter email address'}
               value={customEmail}
-              onChange={e => setCustomEmail(e.target.value)}
+              onChange={e => { setCustomEmail(e.target.value); setCustomError(''); }}
               required
               autoFocus
             />
@@ -557,13 +577,19 @@ function AuthPage({ onAuthenticated }) {
   }
 
   async function submit(event) {
-    event.preventDefault(); setError(''); setBusy(true);
+    event.preventDefault(); setError('');
+    const emailCheck = validateEmailClient(form.email, language);
+    if (!emailCheck.valid) {
+      setError(emailCheck.error);
+      return;
+    }
+    setBusy(true);
     try {
       const requestBody = {
         name: form.name.trim(), preferredLanguage: language,
         village: form.village.trim(), district: form.district.trim(), state: form.state.trim(),
         currentCrops: splitList(form.currentCrops),
-        email: form.email.trim(),
+        email: emailCheck.email,
         password: form.password
       };
       const { data } = await api.post(register ? '/auth/register' : '/auth/login', requestBody);
@@ -601,16 +627,22 @@ function AuthPage({ onAuthenticated }) {
   }
 
   async function handleSelectSocialAccount(account) {
+    const provider = socialModal || 'google';
+    const validation = validateSocialLoginClient(provider, account.email, language);
+    if (!validation.valid) {
+      setError(validation.error);
+      return;
+    }
     setBusy(true);
     setError('');
     try {
       const { data } = await api.post('/auth/social', {
-        provider: socialModal || 'google',
-        email: account.email.trim(),
-        name: account.name?.trim() || account.email.trim().split('@')[0],
+        provider,
+        email: validation.email,
+        name: account.name?.trim() || validation.email.split('@')[0],
         preferredLanguage: language
       });
-      saveStoredSocialAccount(account);
+      saveStoredSocialAccount({ ...account, email: validation.email });
       setSocialModal(null);
       onAuthenticated(data);
     } catch (e) {
