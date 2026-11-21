@@ -55,13 +55,15 @@ router.post('/login', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-router.post('/social', async (req, res, next) => {
+router.post(['/social', '/social-login'], async (req, res, next) => {
   try {
-    const { provider, email, name, preferredLanguage } = req.body || {};
+    const { provider, email, name, preferredLanguage, account } = req.body || {};
+    const effectiveEmail = email || account?.email;
+    const effectiveName = name || account?.name;
     const result = await authenticateSocialAccount(getDatabasePool(), {
       provider,
-      email,
-      name,
+      email: effectiveEmail,
+      name: effectiveName,
       preferredLanguage
     });
     setSessionCookie(res, result.token);
@@ -71,7 +73,7 @@ router.post('/social', async (req, res, next) => {
 
 router.get('/session', requireAuth, (req, res) => res.json({ farmer: req.farmer, token: generateFarmerJwt(req.farmer) }));
 
-router.post('/password/forgot', passwordResetRequestLimit, async (req, res, next) => {
+router.post(['/password/forgot', '/forgot-password'], passwordResetRequestLimit, async (req, res, next) => {
   try {
     const email = validateEmailAddress(req.body?.email);
     assertVerificationEmailConfigured();
@@ -87,7 +89,7 @@ router.post('/password/forgot', passwordResetRequestLimit, async (req, res, next
   } catch (error) { next(error); }
 });
 
-router.post('/password/reset', passwordResetCompleteLimit, async (req, res, next) => {
+router.post(['/password/reset', '/reset-password'], passwordResetCompleteLimit, async (req, res, next) => {
   try {
     const token = req.body?.token;
     const password = req.body?.password;
@@ -143,9 +145,10 @@ router.post('/logout', async (req, res, next) => {
 });
 
 function validateProfile(body) {
-  const allowed = new Set(['email', 'password', 'name', 'preferredLanguage', 'village', 'district', 'state', 'currentCrops']);
+  const allowed = new Set(['email', 'password', 'name', 'fullName', 'phone', 'preferredLanguage', 'village', 'district', 'state', 'currentCrops']);
   for (const key of Object.keys(body)) if (!allowed.has(key)) throw new HttpError(400, `The field '${key}' cannot be registered.`);
-  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  const rawName = body.name || body.fullName;
+  const name = typeof rawName === 'string' ? rawName.trim() : '';
   if (!name || name.length > 100) throw new HttpError(400, 'Name must be between 1 and 100 characters.');
   const preferredLanguage = body.preferredLanguage || 'en';
   if (!supportedLanguages.has(preferredLanguage)) throw new HttpError(400, 'Choose a language from the supported list.');

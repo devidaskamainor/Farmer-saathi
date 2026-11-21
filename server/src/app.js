@@ -28,7 +28,8 @@ const apiOrigin = new URL(process.env.API_PUBLIC_URL || `http://localhost:${Numb
 const allowedMutationOrigins = new Set([...allowedOrigins, apiOrigin]);
 
 function isAllowedClientOrigin(origin) {
-  if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return true;
+  if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return true;
+  if (/postman|pstmn\.io|vscode/i.test(origin)) return true;
   if (process.env.NODE_ENV === 'production') return false;
   try {
     const url = new URL(origin);
@@ -96,7 +97,7 @@ app.get('/api/health', async (_req, res, next) => {
 });
 app.use('/api/auth', authRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/farmers/history', farmHistoryRoutes);
+app.use(['/api/farmers/history', '/api/history'], farmHistoryRoutes);
 app.use('/api/planner', plannerRoutes);
 app.use('/api/farmers', farmerRoutes);
 app.use('/api/weather', weatherRoutes);

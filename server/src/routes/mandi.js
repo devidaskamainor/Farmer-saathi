@@ -5,11 +5,11 @@ import { HttpError } from '../utils/http.js';
 
 const router = Router();
 router.use(requireAuth);
-router.get('/prices', async (req, res, next) => {
+router.get(['/', '/prices'], async (req, res, next) => {
   try { res.json(await getMandiPrices(filtersFromRequest(req))); }
   catch (error) { next(error); }
 });
-router.get('/compare', async (req, res, next) => {
+router.get(['/trends', '/compare'], async (req, res, next) => {
   try { res.json(await compareMandiPrices(filtersFromRequest(req))); }
   catch (error) { next(error); }
 });

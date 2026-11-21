@@ -9,7 +9,15 @@ const allowedFields = new Set(['name', 'state', 'district', 'village', 'preferre
 
 router.use(requireAuth);
 
-router.get('/profile', (req, res) => res.json({ farmer: req.farmer }));
+router.get(['/profile', '/me', '/'], (req, res) => res.json({ farmer: req.farmer }));
+
+router.put(['/preferred-language', '/me/preferred-language', '/profile/preferred-language'], async (req, res, next) => {
+  try {
+    const lang = validatePreferredLanguage(req.body?.preferredLanguage);
+    const farmer = await updateFarmerProfile(getDatabasePool(), req.authUser.id, profileUpdates({ preferredLanguage: lang }));
+    res.json({ farmer, preferredLanguage: lang });
+  } catch (error) { next(error); }
+});
 
 router.get('/profile/:id', (req, res, next) => {
   try {
@@ -18,9 +26,9 @@ router.get('/profile/:id', (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-router.put('/profile/:id', async (req, res, next) => {
+router.put(['/profile/:id', '/profile', '/me', '/'], async (req, res, next) => {
   try {
-    assertOwner(req);
+    if (req.params.id) assertOwner(req);
     const body = req.body || {};
     for (const key of Object.keys(body)) if (!allowedFields.has(key)) throw new HttpError(400, `The field '${key}' cannot be updated.`);
     if (body.name !== undefined && (!String(body.name).trim() || String(body.name).length > 100)) throw new HttpError(400, 'Name must be between 1 and 100 characters.');

@@ -11,7 +11,7 @@ const router = Router();
 router.use(requireAuth);
 
 // Route conversational questions through the existing data and advice services.
-router.post('/ask', async (req, res, next) => {
+router.post(['/ask', '/chat'], async (req, res, next) => {
   try {
     const message = String(req.body?.message || '').trim();
     if (!message || message.length > 2000) throw new HttpError(400, 'Enter a question of up to 2,000 characters.');
