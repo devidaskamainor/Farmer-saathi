@@ -9,6 +9,7 @@ import {
 import { api, errorMessage } from '../services/api.js';
 import { createSpeechRecognition, speakText, stopSpeaking } from '../services/voice.js';
 import { validateEmailClient, validateSocialLoginClient } from '../services/emailValidator.js';
+import { THEMES, applyTheme, getSavedTheme } from '../services/theme.js';
 import { getLanguageDefinition, languageConfig, languageOptions, supportedLanguageCodes } from '../config/languages.js';
 import { words, serviceCopy, defaultServiceItems, assistantCopy, schemesCopy, schemeDetailLabels, schemeExtraLabels } from '../config/translations.js';
 import { authCopy, authHelpContent, verificationCopy, passwordResetCopy, registrationQuestions } from '../config/authTranslations.js';
@@ -30,6 +31,64 @@ function saveLanguage(language) {
     document.documentElement.lang = definition.locale;
     document.documentElement.dir = definition.direction;
   }
+}
+
+if (typeof window !== 'undefined') {
+  applyTheme(getSavedTheme());
+}
+
+function ThemePicker() {
+  const [theme, setTheme] = useState(getSavedTheme());
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  function selectTheme(id) {
+    setTheme(id);
+    applyTheme(id);
+    setOpen(false);
+  }
+
+  const currentTheme = THEMES.find(t => t.id === theme) || THEMES[0];
+
+  return <div className="theme-switcher-wrapper" ref={ref}>
+    <button
+      type="button"
+      className="theme-switcher-button"
+      onClick={() => setOpen(prev => !prev)}
+      aria-label="Change color theme"
+      title={`Theme: ${currentTheme.name}`}
+    >
+      <span className="theme-dot" style={{ background: currentTheme.accent }} />
+      <span>{currentTheme.name.split(' ')[0]}</span>
+      <ChevronDown size={12} />
+    </button>
+    {open && <div className="theme-menu" role="menu">
+      {THEMES.map(t => <button
+        type="button"
+        key={t.id}
+        className={`theme-option ${theme === t.id ? 'theme-option-active' : ''}`}
+        onClick={() => selectTheme(t.id)}
+      >
+        <span className="theme-option-dot" style={{ background: t.accent }} />
+        <span>{t.name}</span>
+        {theme === t.id && <Check size={14} className="theme-check" strokeWidth={2.5} />}
+      </button>)}
+    </div>}
+  </div>;
 }
 
 function localizedCopy(resources, language) {
@@ -715,7 +774,13 @@ function AuthPage({ onAuthenticated }) {
         </div>
       </div> : <>
         <div className="auth-form-card">
-          <div className="auth-card-topline"><span className="eyebrow">{language === 'kn' ? 'ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ' : language === 'hi' ? 'आपका कृषि सहायक' : language === 'mr' ? 'तुमचा शेती सोबती' : 'YOUR FARMING COMPANION'}</span><button className="auth-language-change" type="button" onClick={() => setShowLanguageChoice(true)}><Globe2 size={14} />{copy.changeLanguage}</button></div>
+          <div className="auth-card-topline">
+            <span className="eyebrow">{language === 'kn' ? 'ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ' : language === 'hi' ? 'आपका कृषि सहायक' : language === 'mr' ? 'तुमचा शेती सोबती' : 'YOUR FARMING COMPANION'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ThemePicker />
+              <button className="auth-language-change" type="button" onClick={() => setShowLanguageChoice(true)}><Globe2 size={14} />{copy.changeLanguage}</button>
+            </div>
+          </div>
           <h2>{register ? copy.registerTitle : copy.loginTitle}</h2>
           <p className="muted">{register ? copy.registerDescription : copy.loginDescription}</p>
           {register && <div className="auth-mode-switch"><button type="button" className={mode === 'simple' ? 'auth-mode-active' : ''} onClick={() => { setMode('simple'); setError(''); }}>{copy.visualMode}</button><button type="button" className={mode === 'guided' ? 'auth-mode-active' : ''} onClick={startGuidedSetup}>{copy.voiceMode}</button></div>}
@@ -1008,7 +1073,13 @@ function AppShell({ farmer, setFarmer, onSignOut }) {
     </aside>
     <main className="main-area">
       <header className="topbar"><button className="mobile-menu" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu /></button><div className="crumbs"><span>Farmer Saathi</span><span className="crumb-slash">/</span><b>{t[page?.key] || t.overview}</b></div>
-        <div className="topbar-right"><label className="language-control"><Globe2 size={16} /><span className="sr-only">{t.language}</span><select aria-label={t.language} value={farmer?.preferredLanguage || 'en'} onChange={e => changeLanguage(e.target.value)}>{languageOptions.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}</select><ChevronDown size={13} /></label><span className="topbar-divider" /><div className="user-chip"><span className="avatar">{initials}</span><span className="user-name">{farmer?.name?.split(' ')[0]}</span></div></div>
+        <div className="topbar-right">
+          <ThemePicker />
+          <span className="topbar-divider" />
+          <label className="language-control"><Globe2 size={16} /><span className="sr-only">{t.language}</span><select aria-label={t.language} value={farmer?.preferredLanguage || 'en'} onChange={e => changeLanguage(e.target.value)}>{languageOptions.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}</select><ChevronDown size={13} /></label>
+          <span className="topbar-divider" />
+          <div className="user-chip"><span className="avatar">{initials}</span><span className="user-name">{farmer?.name?.split(' ')[0]}</span></div>
+        </div>
       </header>
       {offline && <div className="offline-banner" role="status">You’re offline. Live weather, market data, and account updates are unavailable; no cached forecast or price is shown.</div>}
       <div className="page-content"><Outlet context={{ farmer, setFarmer }} /></div>
