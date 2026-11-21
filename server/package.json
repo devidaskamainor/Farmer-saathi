@@ -3,19 +3,28 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "db:config": "node scripts/check-database-config.js",
+    "db:ping": "node scripts/migrate-database.js ping",
+    "db:migrate": "node scripts/migrate-database.js schema",
+    "db:verify": "node scripts/migrate-database.js verify",
+    "db:import-supabase": "node scripts/migrate-database.js data",
     "test": "node --test"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
-    "@supabase/supabase-js": "2.119.0",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "nodemailer": "^10.6.1",
+    "pg": "^8.23.1"
   }
 }

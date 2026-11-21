@@ -1,8 +1,9 @@
-const languageLocales = { en: 'en-IN', hi: 'hi-IN', kn: 'kn-IN' };
+import { languageConfig } from '../config/languages.js';
+
 let speechRequestId = 0;
 
 export function speechLocale(language) {
-  return languageLocales[language] || languageLocales.en;
+  return languageConfig[language]?.locale || languageConfig.en.locale;
 }
 
 export function createSpeechRecognition(language) {

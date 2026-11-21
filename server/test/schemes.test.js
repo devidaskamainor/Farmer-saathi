@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { findSchemeById, findSchemes, potentiallyRelevantSchemes, schemeCatalogue } from '../src/services/schemes.js';
+import { findSchemeById, findSchemes, localizeScheme, potentiallyRelevantSchemes, schemeCatalogue } from '../src/services/schemes.js';
 import { contentFields, getSchemeContent, translationSourceRevisions } from '../src/services/schemeTranslations.js';
 
 test('returns all relevant schemes for an empty filter', () => {
@@ -70,6 +70,15 @@ test('source revision changes make cached translations stale and fall back to En
   assert.equal(localized.translation.status, 'stale');
   assert.equal(localized.content.name, scheme.name);
   assert.equal(localized.content.eligibility, scheme.eligibility);
+});
+
+test('untranslated scheduled languages are reported as unavailable and show original English content', () => {
+  const scheme = findSchemeById('pm-kisan');
+  const localized = localizeScheme(scheme, 'as');
+  assert.equal(localized.translation.status, 'unavailable');
+  assert.equal(localized.translation.language, 'as');
+  assert.equal(localized.contentLanguage, 'en');
+  assert.equal(localized.name, scheme.name);
 });
 
 test('search accepts Hindi and Kannada scheme names', () => {

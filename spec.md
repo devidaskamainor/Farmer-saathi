@@ -41,9 +41,9 @@ Backend:
 - REST APIs
 
 Database:
-- Supabase Postgres
-- Supabase Auth for farmer accounts
-- Row Level Security (RLS) for owner-scoped data access
+- Standalone PostgreSQL
+- Express-managed account authentication with bcrypt password hashes
+- Server-validated HttpOnly session cookies and owner-scoped API authorization
 
 AI:
 - Groq API for agricultural questions and personalized advice.
@@ -83,7 +83,7 @@ Collect the following information:
 - Current crops.
 - Optional soil test information.
 
-Save the profile in Supabase Postgres, linked to the farmer's Supabase Auth user ID.
+Save the profile in PostgreSQL, linked to the application's authenticated user ID.
 
 Use the saved profile to personalize recommendations. Do not ask the farmer to enter the same information repeatedly.
 
@@ -384,7 +384,7 @@ Use the following simplified architecture when building the application.
                +-------------------------+
                | Node.js + Express API   |
                |                         |
-               | Supabase Token Checks   |
+               | Session Cookie Checks   |
                | Request Validation      |
                | API Integration         |
                | Response Handling       |
@@ -430,7 +430,7 @@ Use the following simplified architecture when building the application.
                             |
                             v
                +-------------------------+
-               | Supabase Auth + Postgres|
+               | Standalone PostgreSQL   |
                |                         |
                | Farmer Profiles         |
                | Preferences             |
@@ -440,9 +440,9 @@ Use the following simplified architecture when building the application.
 
 The diagram describes the logical system design. Implement the connections in the actual application.
 
-The React app uses Supabase Auth for sign-up and sign-in. It sends the Supabase access token to Express, which verifies the user and uses that token for RLS-protected database requests.
+The React app uses the Express authentication endpoints for sign-up, sign-in, and sign-out. The API validates an opaque HttpOnly session cookie, derives the farmer identity from the session, and performs parameterized PostgreSQL queries on the server.
 
-Use a Supabase publishable key with the signed-in farmer's access token and RLS. Never expose a Supabase secret/service-role key or AI API key in frontend code.
+Keep database credentials, password hashes, session tokens, and AI API keys on the server. Never connect to PostgreSQL from the browser or trust a user ID supplied by the frontend.
 
 ## 14. Main Application Pages
 
@@ -515,7 +515,12 @@ Display:
 Implement these endpoints with appropriate validation and error handling.
 
 Farmer:
-- Supabase Auth sign-up and sign-in from the client SDK.
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET /api/auth/session
+- GET /api/auth/verify
+- POST /api/auth/verification/resend
 - GET /api/farmers/profile
 - GET /api/farmers/profile/:id
 - PUT /api/farmers/profile/:id
@@ -550,12 +555,19 @@ Protect private profile information with authentication and authorization. Valid
 
 ## 16. Database Models
 
-Create Supabase Postgres tables for:
+Create standalone PostgreSQL tables for:
+
+### User Account
+- ID.
+- Email.
+- Bcrypt password hash.
+- Email verification time.
+- Created and updated timestamps.
 
 ### Farmer
-- ID linked to `auth.users.id`.
+- ID linked to `app_users.id`.
 - Name.
-- Email from the authenticated Supabase user.
+- Email from the authenticated application account.
 - State.
 - District.
 - Village or location.
@@ -566,22 +578,32 @@ Create Supabase Postgres tables for:
 - Current crops.
 - Created date.
 
+### Authentication Session
+- User ID linked to `app_users.id`.
+- SHA-256 hash of a random session token.
+- Expiration and creation timestamps.
+
+### Email Verification
+- User ID linked to `app_users.id`.
+- SHA-256 hash of a random one-time verification token.
+- Expiration and creation timestamps.
+
 ### Farming History
-- Farmer ID linked to the authenticated Supabase user.
+- Farmer ID linked to the authenticated application user.
 - Crop.
 - Planting date, if supplied.
 - Harvest date, if supplied.
 - Notes.
 
 ### Saved Recommendation
-- Farmer ID linked to the authenticated Supabase user.
+- Farmer ID linked to the authenticated application user.
 - Recommendation type.
 - Recommendation details.
 - Related crop, if applicable.
 - Creation date.
 - Relevant data sources.
 
-Use Supabase Auth for passwords; do not store passwords in application tables. Enable RLS and restrict each farmer's records to their own Auth user ID.
+Store only bcrypt password hashes; never store plaintext passwords. Authenticate every private API request on the server and restrict queries to the ID derived from its valid session.
 
 Do not collect unnecessary personal information.
 
@@ -629,12 +651,16 @@ Every visible feature should work. Do not leave buttons that only look functiona
 
 Create a .env.example file.
 
-Include the required variable names, such as:
+Include only the required variable names, such as:
 
-SUPABASE_URL=
-SUPABASE_PUBLISHABLE_KEY=
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
+DATABASE_URL=
+DATABASE_SSL=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
+API_PUBLIC_URL=
 GROQ_API_KEY=
 GROQ_MODEL=openai/gpt-oss-20b
 GROQ_VISION_MODEL=qwen/qwen3.8-27b
@@ -657,7 +683,7 @@ Build the project in stages.
 Stage 1: Core Application
 - React frontend.
 - Node.js backend.
-- Supabase Auth, Postgres connection, and RLS policies.
+- Standalone PostgreSQL connection and backend-managed authentication.
 - Farmer profile.
 - Responsive dashboard.
 - Language selection.
@@ -697,7 +723,7 @@ Do not begin with every advanced feature at once. Complete and test each stage b
 Deployment:
 - Frontend on Render or Vercel.
 - Backend on Render.
-- Database and authentication on Supabase.
+- Standalone PostgreSQL and backend-managed authentication.
 - Optional crop prediction service deployed separately.
 
 Configure environment variables, CORS, production API URLs, and error handling before deployment.
@@ -715,7 +741,7 @@ The completed core application must include:
 - Crop recommendations.
 - English, Hindi, and Kannada support.
 - Text and voice interaction.
-- Supabase Auth and Postgres integration with RLS.
+- PostgreSQL integration and secure server-side session authentication.
 - Proper error handling.
 - Deployment instructions.
 

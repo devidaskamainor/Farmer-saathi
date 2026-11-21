@@ -1,17 +1,9 @@
 import axios from 'axios';
-import { supabase } from '../config/supabase.js';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
-  timeout: 20000
-});
-
-api.interceptors.request.use(async config => {
-  if (!supabase) return config;
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
+  timeout: 20000,
+  withCredentials: true
 });
 
 export function errorMessage(error) {

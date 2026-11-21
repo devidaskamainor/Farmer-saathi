@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { askGroq } from '../services/groq.js';
+import { askGroq, localizeAssistantText } from '../services/groq.js';
 import { getMandiPrices } from '../services/mandi.js';
 import { getWeather } from '../services/weather.js';
 import { detectIntent } from '../services/intent.js';
@@ -29,39 +29,39 @@ router.post('/ask', async (req, res, next) => {
     if (intent === 'UNKNOWN_INTENT' && previousAssistant?.action === 'ask_crop') intent = 'MANDI_PRICE';
 
     if (intent === 'WEATHER_QUERY') {
-      if (!location) return res.json({ intent, action: 'ask_location', answer: localizedLocationPrompt(req.farmer.preferredLanguage), source: 'Location required', generatedAt: new Date().toISOString() });
+      if (!location) return res.json({ intent, action: 'ask_location', answer: await localizeAssistantText(req.farmer, localizedLocationPrompt(req.farmer.preferredLanguage)), source: 'Location required', generatedAt: new Date().toISOString() });
       let weather;
       try {
         weather = await getWeather(location);
       } catch (error) {
         if (!(error instanceof HttpError)) throw error;
-        return res.json({ intent, answer: localizedUnavailable(req.farmer.preferredLanguage, 'weather'), source: 'Weather data unavailable', generatedAt: new Date().toISOString() });
+        return res.json({ intent, answer: await localizeAssistantText(req.farmer, localizedUnavailable(req.farmer.preferredLanguage, 'weather')), source: 'Weather data unavailable', generatedAt: new Date().toISOString() });
       }
       const result = await askGroq({ farmer: req.farmer, task: 'Answer using only the verified current weather and forecast data below. Do not add forecast details that are absent from the data.', prompt: `${recentContext}${message}\n\nVerified weather data (${weather.source}, fetched ${weather.fetchedAt}): ${JSON.stringify(weather)}` });
       return res.json({ ...result, intent, source: `${weather.source} + ${result.source}` });
     }
 
     if (intent === 'MANDI_PRICE') {
-      if (!req.farmer.state && !req.farmer.district) return res.json({ intent, action: 'ask_location', answer: localizedLocationPrompt(req.farmer.preferredLanguage), source: 'Location required', generatedAt: new Date().toISOString() });
+      if (!req.farmer.state && !req.farmer.district) return res.json({ intent, action: 'ask_location', answer: await localizeAssistantText(req.farmer, localizedLocationPrompt(req.farmer.preferredLanguage)), source: 'Location required', generatedAt: new Date().toISOString() });
       const commodity = findCommodity(message);
-      if (!commodity) return res.json({ intent, action: 'ask_crop', answer: localizedCommodityPrompt(req.farmer.preferredLanguage), source: 'Clarification needed', generatedAt: new Date().toISOString() });
+      if (!commodity) return res.json({ intent, action: 'ask_crop', answer: await localizeAssistantText(req.farmer, localizedCommodityPrompt(req.farmer.preferredLanguage)), source: 'Clarification needed', generatedAt: new Date().toISOString() });
       let markets;
       try {
         markets = await getMandiPrices({ state: req.farmer.state, district: req.farmer.district, commodity });
       } catch (error) {
         if (!(error instanceof HttpError)) throw error;
-        return res.json({ intent, answer: localizedUnavailable(req.farmer.preferredLanguage, 'market'), source: 'Market data unavailable', generatedAt: new Date().toISOString() });
+        return res.json({ intent, answer: await localizeAssistantText(req.farmer, localizedUnavailable(req.farmer.preferredLanguage, 'market')), source: 'Market data unavailable', generatedAt: new Date().toISOString() });
       }
       const result = await askGroq({ farmer: req.farmer, task: 'Answer using only the official mandi records below. Include market name, reported date, and modal price where available. If no records are returned, say so. Never call these prices live unless their record date supports that.', prompt: `${recentContext}${message}\n\nOfficial reported market data (${markets.source}, fetched ${markets.fetchedAt}): ${JSON.stringify({ ...markets, records: markets.records.slice(0, 20) })}` });
       return res.json({ ...result, intent, source: `${markets.source} + ${result.source}` });
     }
 
     if (intent === 'GOVERNMENT_SCHEME') {
-      const schemeAnswer = localizedSchemeAnswer(req.farmer);
+      const schemeAnswer = await localizeAssistantText(req.farmer, localizedSchemeAnswer(req.farmer));
       return res.json({ intent, answer: schemeAnswer, source: 'Verified scheme catalogue', generatedAt: new Date().toISOString(), action: 'open_schemes' });
     }
     if (intent === 'UNKNOWN_INTENT') {
-      return res.json({ intent, answer: localizedUnknownPrompt(req.farmer.preferredLanguage), source: 'Clarification needed', generatedAt: new Date().toISOString() });
+      return res.json({ intent, answer: await localizeAssistantText(req.farmer, localizedUnknownPrompt(req.farmer.preferredLanguage)), source: 'Clarification needed', generatedAt: new Date().toISOString() });
     }
 
     const taskByIntent = {

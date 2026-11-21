@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { findSchemeById, findSchemes, localizeScheme, potentiallyRelevantSchemes } from '../services/schemes.js';
 import { HttpError } from '../utils/http.js';
+import { supportedLanguages } from '../config/languages.js';
 
 const router = Router();
 const supportedCategories = new Set(['income-support', 'crop-insurance', 'water-management']);
@@ -64,7 +65,7 @@ function validateFilters(stateValue, categoryValue) {
 
 function requestedLanguage(value, preferredLanguage) {
   const language = value === undefined ? (preferredLanguage || 'en') : String(value);
-  if (!['en', 'hi', 'kn'].includes(language)) throw new HttpError(400, 'Choose a supported scheme language.');
+  if (!supportedLanguages.has(language)) throw new HttpError(400, 'Choose a supported language.');
   return language;
 }
 export default router;

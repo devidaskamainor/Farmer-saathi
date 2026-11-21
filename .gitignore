@@ -5,5 +5,7 @@ dist/
 !.env.example
 !client/.env.example
 coverage/
+*.dump
+*.backup
 .DS_Store
 npm-debug.log*

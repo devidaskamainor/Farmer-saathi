@@ -47,6 +47,11 @@ export async function getWeather(location) {
   }
 }
 
+export async function getPlanningWeather(location) {
+  if (!location) throw new HttpError(400, 'Add your village, district, or city to your farmer profile to request a forecast.');
+  return getOpenMeteoWeather(location, 7);
+}
+
 async function getOpenWeather(location, apiKey) {
   const query = new URLSearchParams({ q: location, appid: apiKey, units: 'metric' });
   const [current, forecast] = await Promise.all([
@@ -83,14 +88,14 @@ async function getOpenWeather(location, apiKey) {
   };
 }
 
-async function getOpenMeteoWeather(location) {
+async function getOpenMeteoWeather(location, forecastDays = 5) {
   const place = await geocodeIndiaLocation(location);
   const params = new URLSearchParams({
     latitude: String(place.latitude),
     longitude: String(place.longitude),
     current: 'temperature_2m,relative_humidity_2m,rain,precipitation,weather_code,wind_speed_10m',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,rain_sum',
-    forecast_days: '5',
+    forecast_days: String(forecastDays),
     timezone: place.timezone || 'auto',
     wind_speed_unit: 'ms'
   });
@@ -110,7 +115,7 @@ async function getOpenMeteoWeather(location) {
       rainfallMm: current.rain ?? current.precipitation ?? 0,
       conditions: weatherText(current.weather_code)
     },
-    forecast: daily.time.slice(0, 5).map((date, index) => ({
+    forecast: daily.time.slice(0, forecastDays).map((date, index) => ({
       date,
       minC: daily.temperature_2m_min?.[index],
       maxC: daily.temperature_2m_max?.[index],
