@@ -26,7 +26,8 @@ router.post('/transcribe', requireAuth, (req, res, next) => uploadAudio.single('
   next();
 }), async (req, res, next) => {
   try {
-    const langDef = getLanguageDefinition(req.farmer.preferredLanguage);
+    const targetLang = req.body?.language || req.farmer.preferredLanguage || 'en';
+    const langDef = getLanguageDefinition(targetLang);
     if (!langDef.sttSupported) {
       throw new HttpError(422, 'Voice input is not available for this language. Please type your question instead.');
     }
@@ -37,7 +38,7 @@ router.post('/transcribe', requireAuth, (req, res, next) => uploadAudio.single('
       buffer: req.file.buffer,
       mimetype,
       filename: `recording.${extension}`,
-      language: req.farmer.preferredLanguage
+      language: targetLang
     });
     res.json(result);
   } catch (error) { next(error); }
@@ -47,7 +48,8 @@ router.post('/speak', requireAuth, async (req, res, next) => {
   try {
     const text = String(req.body?.text || '').trim();
     if (!text || text.length > 2500) throw new HttpError(400, 'Enter text of up to 2,500 characters for spoken playback.');
-    const voice = getLanguageDefinition(req.farmer.preferredLanguage).sarvamTts;
+    const targetLang = req.body?.language || req.farmer.preferredLanguage || 'en';
+    const voice = getLanguageDefinition(targetLang).sarvamTts;
     if (!voice) throw new HttpError(422, 'Spoken playback is not available in this language. The answer is still available as text.');
     const audio = await synthesizeSpeech(text, voice);
     res.set('Cache-Control', 'no-store').type('audio/wav').send(audio);

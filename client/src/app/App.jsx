@@ -1447,7 +1447,7 @@ function AssistantPage() {
       if (!url) {
         const controller = new AbortController();
         speechAbortRef.current = controller;
-        const response = await api.post('/voice/speak', { text }, {
+        const response = await api.post('/voice/speak', { text, language }, {
           responseType: 'blob',
           timeout: 45000,
           signal: controller.signal
@@ -1592,6 +1592,7 @@ function AssistantPage() {
         const formData = new FormData();
         const extension = mimetype === 'audio/mp4' ? 'm4a' : 'webm';
         formData.append('audio', blob, `recording.${extension}`);
+        formData.append('language', language);
         const controller = new AbortController();
         transcriptionAbortRef.current = controller;
         setTranscribing(true);
