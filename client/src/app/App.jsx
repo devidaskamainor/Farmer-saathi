@@ -70,7 +70,40 @@ export default function App() {
     if (farmer?.preferredLanguage && supportedLanguages.has(farmer.preferredLanguage)) saveLanguage(farmer.preferredLanguage);
   }, [farmer?.preferredLanguage]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token=')) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      if (accessToken) {
+        window.history.replaceState(null, '', window.location.pathname);
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+          .then(res => res.json())
+          .then(googleUser => {
+            if (googleUser?.email) {
+              return api.post('/auth/social', {
+                provider: 'google',
+                email: googleUser.email,
+                name: googleUser.name || googleUser.given_name || googleUser.email.split('@')[0],
+                preferredLanguage: readSavedLanguage() || 'en'
+              });
+            }
+          })
+          .then(response => {
+            if (response?.data) onAuthenticated(response.data);
+          })
+          .catch(err => {
+            setProfileError(errorMessage(err));
+          });
+      }
+    }
+  }, []);
+
   const onAuthenticated = (data) => {
+    if (data?.token && typeof window !== 'undefined') {
+      localStorage.setItem('farmer_saathi_token', data.token);
+    }
     setAuthenticated(true);
     setFarmer(data?.farmer || null);
     setProfileError('');
@@ -78,6 +111,9 @@ export default function App() {
   const signOut = async () => {
     try { await api.post('/auth/logout'); }
     catch (error) { window.alert(errorMessage(error)); }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('farmer_saathi_token');
+    }
     setAuthenticated(false);
     setFarmer(null);
   };

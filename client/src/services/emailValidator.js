@@ -84,16 +84,17 @@ export function validateSocialLoginClient(provider, email, language = 'en') {
   const emailCheck = validateEmailClient(email, language);
   if (!emailCheck.valid) return emailCheck;
 
+  const normProvider = String(provider || '').trim().toLowerCase();
   const domain = emailCheck.email.split('@')[1];
 
-  if (provider === 'google' && (domain === 'facebook.com' || domain === 'fb.com')) {
+  if (normProvider === 'google' && (domain === 'facebook.com' || domain === 'fb.com')) {
     return {
       valid: false,
       error: language === 'kn' ? 'Google ಲಾಗಿನ್ ಮಾಡಲು Gmail ಅಥವಾ Google ಖಾತೆ ಬಳಸಿ.' : language === 'hi' ? 'Google लॉगिन के लिए कृपया Gmail या Google खाता उपयोग करें।' : 'Please use a valid Google or Gmail account to sign in with Google.'
     };
   }
 
-  if (provider === 'facebook' && (domain === 'facebook.com' || domain === 'fb.com')) {
+  if (normProvider === 'facebook' && (domain === 'facebook.com' || domain === 'fb.com')) {
     return {
       valid: false,
       error: language === 'kn' ? 'ನಿಷ್ಕ್ರಿಯಗೊಂಡ @facebook.com ಇಮೇಲ್ ಬದಲಿಗೆ ನಿಮ್ಮ Facebook ನ ನಿಜವಾದ ಇಮೇಲ್ ಬಳಸಿ.' : language === 'hi' ? 'अमान्य @facebook.com ईमेल के बजाय अपने Facebook खाते से जुड़ा असली ईमेल उपयोग करें।' : 'Retired @facebook.com emails cannot be used. Please use the real email linked to your Facebook account.'

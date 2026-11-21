@@ -23,11 +23,11 @@ const apiOrigin = new URL(process.env.API_PUBLIC_URL || `http://localhost:${Numb
 const allowedMutationOrigins = new Set([...allowedOrigins, apiOrigin]);
 
 function isAllowedClientOrigin(origin) {
-  if (allowedOrigins.includes(origin)) return true;
+  if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return true;
   if (process.env.NODE_ENV === 'production') return false;
   try {
     const url = new URL(origin);
-    if (url.protocol !== 'http:' || url.origin !== origin) return false;
+    if (!['http:', 'https:'].includes(url.protocol) || url.origin !== origin) return false;
     const hostname = url.hostname.toLowerCase();
     if (hostname === 'localhost' || hostname === '[::1]') return true;
     if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname)) return false;

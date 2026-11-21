@@ -129,8 +129,8 @@ export function validateEmailAddress(email, { allowTestEnvironment = true } = {}
 
 export function validateSocialAccount(provider, { email, id }) {
   const normProvider = String(provider || '').trim().toLowerCase();
-  if (!['google', 'facebook'].includes(normProvider)) {
-    throw new HttpError(400, 'Supported social providers are Google and Facebook.');
+  if (!['google', 'facebook', 'github', 'apple', 'microsoft', 'other'].includes(normProvider)) {
+    throw new HttpError(400, 'Supported social providers are Google, Facebook, GitHub, Apple, and Microsoft.');
   }
 
   const normalized = normalizeEmail(email);

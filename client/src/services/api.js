@@ -1,9 +1,22 @@
 import axios from 'axios';
 
+export const TOKEN_STORAGE_KEY = 'farmer_saathi_token';
+
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 20000,
   withCredentials: true
+});
+
+api.interceptors.request.use(config => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
 });
 
 export function errorMessage(error) {
