@@ -38,6 +38,14 @@ function isAllowedClientOrigin(origin) {
   }
 }
 
+const trustProxyEnv = process.env.TRUST_PROXY;
+if (trustProxyEnv) {
+  const numericHops = Number(trustProxyEnv);
+  app.set('trust proxy', Number.isFinite(numericHops) ? numericHops : trustProxyEnv === 'true' ? 1 : trustProxyEnv);
+} else if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
