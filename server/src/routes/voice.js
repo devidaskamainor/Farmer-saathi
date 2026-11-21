@@ -26,6 +26,10 @@ router.post('/transcribe', requireAuth, (req, res, next) => uploadAudio.single('
   next();
 }), async (req, res, next) => {
   try {
+    const langDef = getLanguageDefinition(req.farmer.preferredLanguage);
+    if (!langDef.sttSupported) {
+      throw new HttpError(422, 'Voice input is not available for this language. Please type your question instead.');
+    }
     if (!req.file?.buffer?.length) throw new HttpError(400, 'Record a short voice message or type your question.');
     const mimetype = req.file.mimetype.split(';')[0].trim().toLowerCase();
     const extension = mimetype === 'audio/webm' ? 'webm' : mimetype === 'audio/mp4' ? 'm4a' : 'audio';

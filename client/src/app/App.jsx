@@ -9,309 +9,8 @@ import {
 import { api, errorMessage } from '../services/api.js';
 import { createSpeechRecognition, speakText, stopSpeaking } from '../services/voice.js';
 import { getLanguageDefinition, languageConfig, languageOptions, supportedLanguageCodes } from '../config/languages.js';
-
-const words = {
-  en: { overview: 'Overview', weather: 'Weather', markets: 'Mandi prices', crops: 'Crop advice', assistant: 'Ask Saathi', irrigation: 'Irrigation', disease: 'Crop health', profile: 'My farm', welcome: 'Good day', dashboard: 'Your farm at a glance', forecast: 'Weather outlook', market: 'Market watch', recommendations: 'Crop recommendations', quickAsk: 'Ask a farming question', location: 'Add your farm location', language: 'Language', save: 'Save changes', loading: 'Loading…', noData: 'No data available yet', signOut: 'Sign out', farmProfile: 'Farm profile', back: 'Back to overview', source: 'Source', updated: 'Updated', tryAgain: 'Try again', crop: 'Crop', district: 'District', state: 'State' },
-  hi: { overview: 'मुख्य पृष्ठ', weather: 'मौसम', markets: 'मंडी भाव', crops: 'फसल सलाह', assistant: 'साथी से पूछें', irrigation: 'सिंचाई', disease: 'फसल स्वास्थ्य', profile: 'मेरा खेत', welcome: 'नमस्कार', dashboard: 'आपके खेत की जानकारी', forecast: 'मौसम पूर्वानुमान', market: 'बाज़ार भाव', recommendations: 'फसल सुझाव', quickAsk: 'खेती का सवाल पूछें', location: 'अपने खेत का स्थान जोड़ें', language: 'भाषा', save: 'बदलाव सहेजें', loading: 'लोड हो रहा है…', noData: 'अभी कोई जानकारी उपलब्ध नहीं', signOut: 'साइन आउट', farmProfile: 'खेत की जानकारी', back: 'मुख्य पृष्ठ पर लौटें', source: 'स्रोत', updated: 'अपडेट', tryAgain: 'फिर कोशिश करें', crop: 'फसल', district: 'ज़िला', state: 'राज्य' },
-  kn: { overview: 'ಮುಖ್ಯ ಪುಟ', weather: 'ಹವಾಮಾನ', markets: 'ಮಾರುಕಟ್ಟೆ ಬೆಲೆ', crops: 'ಬೆಳೆ ಸಲಹೆ', assistant: 'ಸಾಥಿಗೆ ಕೇಳಿ', irrigation: 'ನೀರಾವರಿ', disease: 'ಬೆಳೆ ಆರೋಗ್ಯ', profile: 'ನನ್ನ ಹೊಲ', welcome: 'ನಮಸ್ಕಾರ', dashboard: 'ನಿಮ್ಮ ಹೊಲದ ಮಾಹಿತಿ', forecast: 'ಹವಾಮಾನ ಮುನ್ಸೂಚನೆ', market: 'ಮಾರುಕಟ್ಟೆ ಮಾಹಿತಿ', recommendations: 'ಬೆಳೆ ಶಿಫಾರಸುಗಳು', quickAsk: 'ಕೃಷಿ ಪ್ರಶ್ನೆ ಕೇಳಿ', location: 'ನಿಮ್ಮ ಹೊಲದ ಸ್ಥಳ ಸೇರಿಸಿ', language: 'ಭಾಷೆ', save: 'ಬದಲಾವಣೆ ಉಳಿಸಿ', loading: 'ಲೋಡ್ ಆಗುತ್ತಿದೆ…', noData: 'ಇನ್ನೂ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ', signOut: 'ಸೈನ್ ಔಟ್', farmProfile: 'ಹೊಲದ ವಿವರ', back: 'ಮುಖ್ಯ ಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ', source: 'ಮೂಲ', updated: 'ನವೀಕರಿಸಲಾಗಿದೆ', tryAgain: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ', crop: 'ಬೆಳೆ', district: 'ಜಿಲ್ಲೆ', state: 'ರಾಜ್ಯ' }
-};
-
-const authHelpContent = {
-  en: {
-    name: 'English', title: 'Need help? Ask Saathi', subtitle: 'I can guide you through signing in or creating an account.',
-    greeting: 'Hello! Choose a question or type one below. Never share your password or one-time code in this chat.',
-    prompts: [['login', 'How do I sign in?'], ['register', 'How do I create an account?'], ['email', 'Email confirmation'], ['password', 'I forgot my password']],
-    answers: {
-      login: 'To sign in, leave “Sign in” selected, enter the email address and password you used when registering, then tap “Sign in”. Enter your password only in the Password field, never in this chat.',
-      register: 'To create an account, choose “Create an account” below. Enter your name, email address, and a password with at least 8 characters, then tap “Create account”. Open the verification link we email you to finish creating your account. You can add your farm details after signing up.',
-      email: 'After signing up, open the message from Farmer Saathi and tap its verification link. Check your Spam or Junk folder too. The link opens your verified account.',
-      password: 'Use “Forgot Password?” on the sign-in page and follow the reset link sent to your registered email. Never share that link or your new password.',
-      other: 'I can help with signing in, creating an account, email confirmation, or a forgotten password. Pick one of the question buttons or ask in your own words.'
-    },
-    placeholder: 'Type a question about your account…', send: 'Send', voice: 'Speak your question', stopVoice: 'Stop listening', listen: 'Listen', language: 'Assistant language',
-    voiceLanguageHint: 'Before speaking, choose the language you will use from the menu above.',
-    voiceUnsupported: 'Voice input is not available in this browser. Type your question instead.', voiceError: 'Microphone could not start. Check browser microphone permission, or type your question.',
-    speechUnsupported: 'Spoken answers are not available in this browser.', speechReview: 'I heard you. Review the words, then tap Send.',
-    voiceMissing: 'This device has no speech voice for the selected language. I left the answer as text instead of reading it in the wrong language. Add a voice for this language in device speech settings and restart the browser.',
-    privacy: 'Saathi does not need your password or one-time code. Questions are answered in this page; your browser may process voice input.'
-  },
-  hi: {
-    name: 'हिन्दी', title: 'मदद चाहिए? साथी से पूछें', subtitle: 'मैं लॉग इन करने या खाता बनाने में मदद करूँगा।',
-    greeting: 'नमस्ते! नीचे कोई सवाल चुनें या लिखें। इस चैट में अपना पासवर्ड या ओटीपी कभी न दें।',
-    prompts: [['login', 'लॉग इन कैसे करें?'], ['register', 'खाता कैसे बनाएं?'], ['email', 'ईमेल की पुष्टि'], ['password', 'पासवर्ड भूल गया']],
-    answers: {
-      login: 'लॉग इन करने के लिए “Sign in” चुनें। अपना पंजीकृत ईमेल और पासवर्ड भरें, फिर “Sign in” दबाएँ। पासवर्ड केवल Password वाले खाने में लिखें, इस चैट में नहीं।',
-      register: 'खाता बनाने के लिए नीचे “Create an account” चुनें। अपना नाम, ईमेल और कम से कम 8 अक्षरों का पासवर्ड भरें, फिर “Create account” दबाएँ। खाता पूरा करने के लिए ईमेल में आया पुष्टि लिंक खोलें। खेत की जानकारी बाद में जोड़ सकते हैं।',
-      email: 'पंजीकरण के बाद Farmer Saathi का ईमेल खोलकर पुष्टि लिंक दबाएँ। Spam या Junk फ़ोल्डर भी देखें। लिंक खोलने पर आपका खाता सत्यापित हो जाएगा।',
-      password: 'लॉग इन पेज पर “पासवर्ड भूल गए?” चुनें और पंजीकृत ईमेल पर आए लिंक का उपयोग करें। उस लिंक या नए पासवर्ड को किसी से साझा न करें।',
-      other: 'मैं लॉग इन, नया खाता बनाने, ईमेल की पुष्टि या भूले हुए पासवर्ड में मदद कर सकता हूँ। नीचे सवाल चुनें या अपना सवाल लिखें।'
-    },
-    placeholder: 'अपने खाते के बारे में सवाल लिखें…', send: 'भेजें', voice: 'बोलकर सवाल पूछें', stopVoice: 'सुनना बंद करें', listen: 'सुनें', language: 'सहायक की भाषा',
-    voiceLanguageHint: 'बोलने से पहले ऊपर दिए मेनू में अपनी भाषा चुनें।',
-    voiceUnsupported: 'इस ब्राउज़र में आवाज़ से लिखना उपलब्ध नहीं है। अपना सवाल टाइप करें।', voiceError: 'माइक्रोफ़ोन शुरू नहीं हुआ। ब्राउज़र की माइक्रोफ़ोन अनुमति जाँचें या सवाल टाइप करें।',
-    speechUnsupported: 'इस ब्राउज़र में जवाब सुनने की सुविधा उपलब्ध नहीं है।', speechReview: 'आपकी बात लिख ली गई है। पढ़कर देखें, फिर भेजें।',
-    voiceMissing: 'इस डिवाइस में चुनी हुई भाषा की आवाज़ उपलब्ध नहीं है। गलत भाषा में पढ़ने के बजाय जवाब टेक्स्ट में रखा है। डिवाइस की वाणी सेटिंग में इस भाषा की आवाज़ जोड़ें और ब्राउज़र फिर से खोलें।',
-    privacy: 'साथी को आपका पासवर्ड या ओटीपी नहीं चाहिए। सवाल इसी पेज पर जवाब पाते हैं; आवाज़ को आपका ब्राउज़र संसाधित कर सकता है।'
-  },
-  kn: {
-    name: 'ಕನ್ನಡ', title: 'ಸಹಾಯ ಬೇಕೇ? ಸಾಥಿಯನ್ನು ಕೇಳಿ', subtitle: 'ಲಾಗಿನ್ ಮಾಡಲು ಅಥವಾ ಖಾತೆ ತೆರೆಯಲು ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.',
-    greeting: 'ನಮಸ್ಕಾರ! ಕೆಳಗಿನ ಪ್ರಶ್ನೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ಟೈಪ್ ಮಾಡಿ. ನಿಮ್ಮ ಪಾಸ್‌ವರ್ಡ್ ಅಥವಾ ಒಟಿಪಿಯನ್ನು ಈ ಚಾಟ್‌ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.',
-    prompts: [['login', 'ಲಾಗಿನ್ ಮಾಡುವುದು ಹೇಗೆ?'], ['register', 'ಖಾತೆ ತೆರೆಯುವುದು ಹೇಗೆ?'], ['email', 'ಇಮೇಲ್ ದೃಢೀಕರಣ'], ['password', 'ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿದ್ದೇನೆ']],
-    answers: {
-      login: 'ಲಾಗಿನ್ ಮಾಡಲು “Sign in” ಆಯ್ಕೆಮಾಡಿ. ನೋಂದಣಿಗೆ ಬಳಸಿದ ಇಮೇಲ್ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ, ನಂತರ “Sign in” ಒತ್ತಿ. ಪಾಸ್‌ವರ್ಡ್ ಅನ್ನು Password ಜಾಗದಲ್ಲಷ್ಟೇ ನಮೂದಿಸಿ; ಈ ಚಾಟ್‌ನಲ್ಲಿ ಬರೆಯಬೇಡಿ.',
-      register: 'ಖಾತೆ ತೆರೆಯಲು ಕೆಳಗಿನ “Create an account” ಆಯ್ಕೆಮಾಡಿ. ನಿಮ್ಮ ಹೆಸರು, ಇಮೇಲ್ ಮತ್ತು ಕನಿಷ್ಠ 8 ಅಕ್ಷರಗಳ ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ, ನಂತರ “Create account” ಒತ್ತಿ. ಖಾತೆ ಪೂರ್ಣಗೊಳಿಸಲು ಇಮೇಲ್‌ನಲ್ಲಿರುವ ದೃಢೀಕರಣ ಲಿಂಕ್ ತೆರೆಯಿರಿ. ಹೊಲದ ವಿವರಗಳನ್ನು ನಂತರ ಸೇರಿಸಬಹುದು.',
-      email: 'ನೋಂದಣಿಯ ನಂತರ Farmer Saathi ಕಳುಹಿಸಿದ ಸಂದೇಶದಲ್ಲಿನ ದೃಢೀಕರಣ ಲಿಂಕ್ ಒತ್ತಿ. Spam ಅಥವಾ Junk ಫೋಲ್ಡರ್ ಕೂಡ ಪರಿಶೀಲಿಸಿ. ಲಿಂಕ್ ತೆರೆದ ನಂತರ ನಿಮ್ಮ ಖಾತೆ ದೃಢೀಕರಿಸಲಾಗುತ್ತದೆ.',
-      password: 'ಲಾಗಿನ್ ಪುಟದಲ್ಲಿರುವ “ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?” ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ನೋಂದಾಯಿತ ಇಮೇಲ್‌ಗೆ ಬರುವ ಲಿಂಕ್ ಬಳಸಿ. ಆ ಲಿಂಕ್ ಅಥವಾ ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಅನ್ನು ಯಾರೊಂದಿಗೂ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.',
-      other: 'ಲಾಗಿನ್, ಹೊಸ ಖಾತೆ ತೆರೆಯುವುದು, ಇಮೇಲ್ ದೃಢೀಕರಣ ಅಥವಾ ಮರೆತ ಪಾಸ್‌ವರ್ಡ್ ಕುರಿತು ನಾನು ಸಹಾಯ ಮಾಡಬಹುದು. ಕೆಳಗಿನ ಪ್ರಶ್ನೆ ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ಟೈಪ್ ಮಾಡಿ.'
-    },
-    placeholder: 'ನಿಮ್ಮ ಖಾತೆಯ ಬಗ್ಗೆ ಪ್ರಶ್ನೆ ಟೈಪ್ ಮಾಡಿ…', send: 'ಕಳುಹಿಸಿ', voice: 'ಮಾತನಾಡಿ ಪ್ರಶ್ನೆ ಕೇಳಿ', stopVoice: 'ಆಲಿಸುವುದನ್ನು ನಿಲ್ಲಿಸಿ', listen: 'ಕೇಳಿ', language: 'ಸಹಾಯಕ ಭಾಷೆ',
-    voiceLanguageHint: 'ಮಾತನಾಡುವ ಮೊದಲು ಮೇಲಿನ ಮೆನುವಿನಲ್ಲಿ ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ.',
-    voiceUnsupported: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಬರವಣಿಗೆ ಲಭ್ಯವಿಲ್ಲ. ಪ್ರಶ್ನೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ.', voiceError: 'ಮೈಕ್ರೊಫೋನ್ ಆರಂಭವಾಗಲಿಲ್ಲ. ಬ್ರೌಸರ್ ಅನುಮತಿ ಪರಿಶೀಲಿಸಿ ಅಥವಾ ಪ್ರಶ್ನೆ ಟೈಪ್ ಮಾಡಿ.',
-    speechUnsupported: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಉತ್ತರವನ್ನು ಧ್ವನಿಯಾಗಿ ಕೇಳಲು ಸಾಧ್ಯವಿಲ್ಲ.', speechReview: 'ನಿಮ್ಮ ಮಾತು ಬರೆಯಲಾಗಿದೆ. ಪರಿಶೀಲಿಸಿ ನಂತರ ಕಳುಹಿಸಿ.',
-    voiceMissing: 'ಈ ಸಾಧನದಲ್ಲಿ ಆಯ್ಕೆಮಾಡಿದ ಭಾಷೆಯ ಧ್ವನಿ ಲಭ್ಯವಿಲ್ಲ. ತಪ್ಪು ಭಾಷೆಯಲ್ಲಿ ಓದುವುದನ್ನು ತಪ್ಪಿಸಲು ಉತ್ತರವನ್ನು ಪಠ್ಯವಾಗಿಯೇ ತೋರಿಸಿದ್ದೇನೆ. ಸಾಧನದ ಮಾತಿನ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಈ ಭಾಷೆಯ ಧ್ವನಿ ಸೇರಿಸಿ, ಬ್ರೌಸರ್ ಮರುಪ್ರಾರಂಭಿಸಿ.',
-    privacy: 'ಸಾಥಿಗೆ ನಿಮ್ಮ ಪಾಸ್‌ವರ್ಡ್ ಅಥವಾ ಒಟಿಪಿ ಅಗತ್ಯವಿಲ್ಲ. ಪ್ರಶ್ನೆಗಳಿಗೆ ಈ ಪುಟದಲ್ಲೇ ಉತ್ತರಿಸಲಾಗುತ್ತದೆ; ನಿಮ್ಮ ಬ್ರೌಸರ್ ಧ್ವನಿಯನ್ನು ಸಂಸ್ಕರಿಸಬಹುದು.'
-  }
-};
-
-const authCopy = {
-  en: {
-    languageTitle: 'Choose your language', languageDescription: 'Tap the language you understand best. You can change it later.', continue: 'Continue', changeLanguage: 'Change language',
-    loginTitle: 'Welcome back', loginDescription: 'Sign in with the email and password for your Farmer Saathi account.',
-    registerTitle: 'Create your account', registerDescription: 'Choose a simple form or let Saathi guide you one question at a time.',
-    name: 'Your name', email: 'Email address', password: 'Password', namePlaceholder: 'For example, Ramesh', emailPlaceholder: 'you@example.com',
-    passwordPlaceholder: 'At least 8 characters', signIn: 'Sign in', createAccount: 'Create account', switchToRegister: 'New to Farmer Saathi?', switchToLogin: 'Already have an account?',
-    useSignIn: 'Sign in', useRegister: 'Create an account', forgotPassword: 'Forgot Password?', visualMode: 'Simple form', voiceMode: 'Voice-guided setup', optional: 'Optional',
-    village: 'Village or town', district: 'District', state: 'State', crops: 'Crops you grow', villagePlaceholder: 'Village or nearby town', districtPlaceholder: 'Your district', statePlaceholder: 'Your state', cropsPlaceholder: 'For example, tomato',
-    step: 'Question', next: 'Next', skip: 'Skip this', back: 'Back', repeatQuestion: 'Repeat question', speakAnswer: 'Speak your answer', stopListening: 'Stop listening', listening: 'Listening… speak now',
-    manualHint: 'Tap the microphone to answer by voice, or type below. You can skip details you do not know.', recognitionUnavailable: 'Voice input is not available in this browser. Type your answer instead.', microphoneError: 'Microphone did not start. Allow microphone access in your browser or type your answer.',
-    reviewTitle: 'Check your details', reviewQuestion: 'Are these details correct?', notProvided: 'Not provided', changeInfo: 'Change information', confirmInfo: 'Confirm details', credentialsTitle: 'Secure account details', credentialsHint: 'Enter your email and password here. Never speak or share your password in the assistant.',
-    accountCreate: 'Create secure account', confirmation: 'Check your email and open the verification link to finish creating your account.', resendVerification: 'Resend verification email',
-    privacy: 'Your details are saved to your private account.', languageWelcome: 'Language selected. I can guide you through creating an account or signing in.'
-  },
-  hi: {
-    languageTitle: 'अपनी भाषा चुनें', languageDescription: 'जिस भाषा को आप अच्छी तरह समझते हैं, उसे चुनें। बाद में बदल सकते हैं।', continue: 'आगे बढ़ें', changeLanguage: 'भाषा बदलें',
-    loginTitle: 'वापस स्वागत है', loginDescription: 'अपने Farmer Saathi खाते के ईमेल और पासवर्ड से लॉग इन करें।',
-    registerTitle: 'अपना खाता बनाएं', registerDescription: 'सरल फ़ॉर्म चुनें या साथी से एक-एक सवाल पूछने को कहें।',
-    name: 'आपका नाम', email: 'ईमेल पता', password: 'पासवर्ड', namePlaceholder: 'उदाहरण: रमेश', emailPlaceholder: 'you@example.com',
-    passwordPlaceholder: 'कम से कम 8 अक्षर', signIn: 'लॉग इन करें', createAccount: 'खाता बनाएं', switchToRegister: 'Farmer Saathi पर नए हैं?', switchToLogin: 'पहले से खाता है?',
-    useSignIn: 'लॉग इन', useRegister: 'खाता बनाएं', forgotPassword: 'पासवर्ड भूल गए?', visualMode: 'सरल फ़ॉर्म', voiceMode: 'आवाज़ से जानकारी दें', optional: 'ज़रूरी नहीं',
-    village: 'गाँव या कस्बा', district: 'ज़िला', state: 'राज्य', crops: 'आपकी फसलें', villagePlaceholder: 'गाँव या पास का कस्बा', districtPlaceholder: 'आपका ज़िला', statePlaceholder: 'आपका राज्य', cropsPlaceholder: 'उदाहरण: टमाटर',
-    step: 'सवाल', next: 'आगे', skip: 'छोड़ें', back: 'वापस', repeatQuestion: 'सवाल फिर सुनें', speakAnswer: 'बोलकर जवाब दें', stopListening: 'सुनना बंद करें', listening: 'सुन रहा हूँ… अब बोलें',
-    manualHint: 'माइक्रोफ़ोन दबाकर बोलें या नीचे लिखें। जो जानकारी नहीं पता, उसे छोड़ सकते हैं।', recognitionUnavailable: 'इस ब्राउज़र में आवाज़ से लिखना उपलब्ध नहीं है। जवाब टाइप करें।', microphoneError: 'माइक्रोफ़ोन शुरू नहीं हुआ। ब्राउज़र में अनुमति दें या जवाब टाइप करें।',
-    reviewTitle: 'अपनी जानकारी जाँचें', reviewQuestion: 'क्या यह जानकारी सही है?', notProvided: 'नहीं दी', changeInfo: 'जानकारी बदलें', confirmInfo: 'जानकारी की पुष्टि करें', credentialsTitle: 'खाते की सुरक्षित जानकारी', credentialsHint: 'ईमेल और पासवर्ड यहाँ लिखें। पासवर्ड सहायक को न बोलें और किसी से साझा न करें।',
-    accountCreate: 'सुरक्षित खाता बनाएं', confirmation: 'ईमेल में आया पुष्टि लिंक खोलकर अपना खाता पूरा करें।', resendVerification: 'पुष्टि ईमेल फिर भेजें',
-    privacy: 'आपकी जानकारी आपके निजी खाते में सहेजी जाती है।', languageWelcome: 'भाषा चुनी गई। मैं खाता बनाने या लॉग इन करने में आपकी मदद कर सकता हूँ।'
-  },
-  kn: {
-    languageTitle: 'ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ', languageDescription: 'ನಿಮಗೆ ಚೆನ್ನಾಗಿ ಅರ್ಥವಾಗುವ ಭಾಷೆಯನ್ನು ಒತ್ತಿ. ನಂತರ ಬದಲಾಯಿಸಬಹುದು.', continue: 'ಮುಂದುವರಿಸಿ', changeLanguage: 'ಭಾಷೆ ಬದಲಿಸಿ',
-    loginTitle: 'ಮತ್ತೆ ಸ್ವಾಗತ', loginDescription: 'ನಿಮ್ಮ Farmer Saathi ಖಾತೆಯ ಇಮೇಲ್ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ಬಳಸಿ ಲಾಗಿನ್ ಮಾಡಿ.',
-    registerTitle: 'ನಿಮ್ಮ ಖಾತೆ ತೆರೆಯಿರಿ', registerDescription: 'ಸರಳ ಫಾರ್ಮ್ ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ಸಾಥಿ ಒಂದೊಂದು ಪ್ರಶ್ನೆ ಕೇಳಲಿ.',
-    name: 'ನಿಮ್ಮ ಹೆಸರು', email: 'ಇಮೇಲ್ ವಿಳಾಸ', password: 'ಪಾಸ್‌ವರ್ಡ್', namePlaceholder: 'ಉದಾಹರಣೆ: ರಮೇಶ್', emailPlaceholder: 'you@example.com',
-    passwordPlaceholder: 'ಕನಿಷ್ಠ 8 ಅಕ್ಷರಗಳು', signIn: 'ಲಾಗಿನ್ ಮಾಡಿ', createAccount: 'ಖಾತೆ ತೆರೆಯಿರಿ', switchToRegister: 'Farmer Saathi ಗೆ ಹೊಸಬರೇ?', switchToLogin: 'ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?',
-    useSignIn: 'ಲಾಗಿನ್', useRegister: 'ಖಾತೆ ತೆರೆಯಿರಿ', forgotPassword: 'ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?', visualMode: 'ಸರಳ ಫಾರ್ಮ್', voiceMode: 'ಧ್ವನಿ ಮಾರ್ಗದರ್ಶನ', optional: 'ಐಚ್ಛಿಕ',
-    village: 'ಗ್ರಾಮ ಅಥವಾ ಊರು', district: 'ಜಿಲ್ಲೆ', state: 'ರಾಜ್ಯ', crops: 'ನೀವು ಬೆಳೆಯುವ ಬೆಳೆಗಳು', villagePlaceholder: 'ಗ್ರಾಮ ಅಥವಾ ಹತ್ತಿರದ ಊರು', districtPlaceholder: 'ನಿಮ್ಮ ಜಿಲ್ಲೆ', statePlaceholder: 'ನಿಮ್ಮ ರಾಜ್ಯ', cropsPlaceholder: 'ಉದಾಹರಣೆ: ಟೊಮೇಟೊ',
-    step: 'ಪ್ರಶ್ನೆ', next: 'ಮುಂದೆ', skip: 'ಬಿಟ್ಟುಬಿಡಿ', back: 'ಹಿಂದೆ', repeatQuestion: 'ಪ್ರಶ್ನೆಯನ್ನು ಮತ್ತೆ ಕೇಳಿ', speakAnswer: 'ಮಾತನಾಡಿ ಉತ್ತರಿಸಿ', stopListening: 'ಆಲಿಸುವುದನ್ನು ನಿಲ್ಲಿಸಿ', listening: 'ಆಲಿಸುತ್ತಿದ್ದೇನೆ… ಈಗ ಮಾತನಾಡಿ',
-    manualHint: 'ಮೈಕ್ರೊಫೋನ್ ಒತ್ತಿ ಮಾತನಾಡಿ ಅಥವಾ ಕೆಳಗೆ ಟೈಪ್ ಮಾಡಿ. ತಿಳಿಯದ ವಿವರಗಳನ್ನು ಬಿಟ್ಟುಬಿಡಬಹುದು.', recognitionUnavailable: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಬರವಣಿಗೆ ಲಭ್ಯವಿಲ್ಲ. ಉತ್ತರವನ್ನು ಟೈಪ್ ಮಾಡಿ.', microphoneError: 'ಮೈಕ್ರೊಫೋನ್ ಆರಂಭವಾಗಲಿಲ್ಲ. ಬ್ರೌಸರ್ ಅನುಮತಿ ನೀಡಿ ಅಥವಾ ಉತ್ತರ ಟೈಪ್ ಮಾಡಿ.',
-    reviewTitle: 'ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ', reviewQuestion: 'ಈ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?', notProvided: 'ನೀಡಿಲ್ಲ', changeInfo: 'ವಿವರ ಬದಲಿಸಿ', confirmInfo: 'ವಿವರ ದೃಢೀಕರಿಸಿ', credentialsTitle: 'ಖಾತೆಯ ಸುರಕ್ಷಿತ ವಿವರಗಳು', credentialsHint: 'ಇಮೇಲ್ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ಅನ್ನು ಇಲ್ಲಿ ನಮೂದಿಸಿ. ಸಹಾಯಕನಿಗೆ ಪಾಸ್‌ವರ್ಡ್ ಹೇಳಬೇಡಿ ಅಥವಾ ಯಾರೊಂದಿಗೂ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.',
-    accountCreate: 'ಸುರಕ್ಷಿತ ಖಾತೆ ತೆರೆಯಿರಿ', confirmation: 'ಇಮೇಲ್‌ನಲ್ಲಿರುವ ದೃಢೀಕರಣ ಲಿಂಕ್ ತೆರೆಯುವ ಮೂಲಕ ಖಾತೆ ಪೂರ್ಣಗೊಳಿಸಿ.', resendVerification: 'ದೃಢೀಕರಣ ಇಮೇಲ್ ಮತ್ತೆ ಕಳುಹಿಸಿ',
-    privacy: 'ನಿಮ್ಮ ವಿವರಗಳು ನಿಮ್ಮ ಖಾಸಗಿ ಖಾತೆಯಲ್ಲಿ ಉಳಿಯುತ್ತವೆ.', languageWelcome: 'ಭಾಷೆ ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ. ಖಾತೆ ತೆರೆಯಲು ಅಥವಾ ಲಾಗಿನ್ ಮಾಡಲು ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.'
-  }
-};
-
-const verificationCopy = {
-  en: {
-    title: 'Verify your email',
-    ready: 'Confirm your email address to activate your Farmer Saathi account.',
-    verifying: 'Verifying your email…',
-    success: 'Your email is verified. Your account is ready.',
-    invalid: 'This verification link is missing, invalid, or expired. Return to sign in and request a new link.',
-    verify: 'Verify email',
-    continue: 'Continue to Farmer Saathi',
-    signIn: 'Return to sign in'
-  },
-  hi: {
-    title: 'अपना ईमेल सत्यापित करें',
-    ready: 'अपना Farmer Saathi खाता सक्रिय करने के लिए ईमेल की पुष्टि करें।',
-    verifying: 'ईमेल सत्यापित हो रहा है…',
-    success: 'आपका ईमेल सत्यापित हो गया है। आपका खाता तैयार है।',
-    invalid: 'यह पुष्टि लिंक उपलब्ध नहीं है, अमान्य है या समाप्त हो गया है। लॉग इन पर लौटें और नया लिंक माँगें।',
-    verify: 'ईमेल सत्यापित करें',
-    continue: 'Farmer Saathi पर जाएँ',
-    signIn: 'लॉग इन पर लौटें'
-  },
-  kn: {
-    title: 'ನಿಮ್ಮ ಇಮೇಲ್ ದೃಢೀಕರಿಸಿ',
-    ready: 'ನಿಮ್ಮ Farmer Saathi ಖಾತೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ಇಮೇಲ್ ದೃಢೀಕರಿಸಿ.',
-    verifying: 'ನಿಮ್ಮ ಇಮೇಲ್ ದೃಢೀಕರಿಸಲಾಗುತ್ತಿದೆ…',
-    success: 'ನಿಮ್ಮ ಇಮೇಲ್ ದೃಢೀಕರಿಸಲಾಗಿದೆ. ನಿಮ್ಮ ಖಾತೆ ಸಿದ್ಧವಾಗಿದೆ.',
-    invalid: 'ಈ ದೃಢೀಕರಣ ಲಿಂಕ್ ಇಲ್ಲ, ಅಮಾನ್ಯವಾಗಿದೆ ಅಥವಾ ಅವಧಿ ಮುಗಿದಿದೆ. ಲಾಗಿನ್‌ಗೆ ಹಿಂತಿರುಗಿ ಮತ್ತು ಹೊಸ ಲಿಂಕ್ ಕೇಳಿ.',
-    verify: 'ಇಮೇಲ್ ದೃಢೀಕರಿಸಿ',
-    continue: 'Farmer Saathi ಗೆ ಮುಂದುವರಿಸಿ',
-    signIn: 'ಲಾಗಿನ್‌ಗೆ ಹಿಂತಿರುಗಿ'
-  }
-};
-
-const passwordResetCopy = {
-  en: {
-    forgotTitle: 'Forgot your password?',
-    forgotDescription: 'Enter the email address on your account. If it is registered, we will send a reset link.',
-    requestSent: 'If an account exists for that email, a password reset link will be sent. Check your inbox and spam folder.',
-    sendReset: 'Send reset link',
-    resetTitle: 'Choose a new password',
-    resetDescription: 'Choose a new password for your Farmer Saathi account.',
-    newPassword: 'New password',
-    confirmPassword: 'Confirm new password',
-    passwordHint: 'Use at least 8 characters. Passwords may not exceed 72 UTF-8 bytes.',
-    passwordMismatch: 'The passwords do not match.',
-    passwordInvalid: 'Use a password of at least 8 bytes and no more than 72 UTF-8 bytes.',
-    reset: 'Reset password',
-    resetting: 'Resetting password…',
-    resetSuccess: 'Your password has been reset. You will be redirected to sign in.',
-    invalidReset: 'This password reset link is missing, invalid, or expired. Request a new link.',
-    signIn: 'Return to sign in'
-  },
-  hi: {
-    forgotTitle: 'पासवर्ड भूल गए?',
-    forgotDescription: 'अपने खाते का ईमेल दर्ज करें। खाता मौजूद होने पर हम रीसेट लिंक भेजेंगे।',
-    requestSent: 'यदि इस ईमेल का खाता मौजूद है, तो रीसेट लिंक भेजा जाएगा। इनबॉक्स और स्पैम फ़ोल्डर देखें।',
-    sendReset: 'रीसेट लिंक भेजें',
-    resetTitle: 'नया पासवर्ड चुनें',
-    resetDescription: 'अपने Farmer Saathi खाते के लिए नया पासवर्ड चुनें।',
-    newPassword: 'नया पासवर्ड',
-    confirmPassword: 'नए पासवर्ड की पुष्टि करें',
-    passwordHint: 'कम से कम 8 अक्षर उपयोग करें। पासवर्ड 72 UTF-8 बाइट से अधिक नहीं हो सकता।',
-    passwordMismatch: 'दोनों पासवर्ड मेल नहीं खाते।',
-    passwordInvalid: 'कम से कम 8 और अधिकतम 72 UTF-8 बाइट का पासवर्ड चुनें।',
-    reset: 'पासवर्ड रीसेट करें',
-    resetting: 'पासवर्ड रीसेट हो रहा है…',
-    resetSuccess: 'आपका पासवर्ड रीसेट हो गया है। आपको लॉग इन पर भेजा जाएगा।',
-    invalidReset: 'यह रीसेट लिंक उपलब्ध नहीं है, अमान्य है या समाप्त हो गया है। नया लिंक माँगें।',
-    signIn: 'लॉग इन पर लौटें'
-  },
-  kn: {
-    forgotTitle: 'ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?',
-    forgotDescription: 'ನಿಮ್ಮ ಖಾತೆಯ ಇಮೇಲ್ ನಮೂದಿಸಿ. ಖಾತೆ ಇದ್ದರೆ ಮರುಹೊಂದಿಸುವ ಲಿಂಕ್ ಕಳುಹಿಸುತ್ತೇವೆ.',
-    requestSent: 'ಈ ಇಮೇಲ್‌ಗೆ ಖಾತೆ ಇದ್ದರೆ ಮರುಹೊಂದಿಸುವ ಲಿಂಕ್ ಕಳುಹಿಸಲಾಗುತ್ತದೆ. ಇನ್‌ಬಾಕ್ಸ್ ಮತ್ತು ಸ್ಪ್ಯಾಮ್ ಪರಿಶೀಲಿಸಿ.',
-    sendReset: 'ಮರುಹೊಂದಿಸುವ ಲಿಂಕ್ ಕಳುಹಿಸಿ',
-    resetTitle: 'ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಆಯ್ಕೆಮಾಡಿ',
-    resetDescription: 'ನಿಮ್ಮ Farmer Saathi ಖಾತೆಗೆ ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಆಯ್ಕೆಮಾಡಿ.',
-    newPassword: 'ಹೊಸ ಪಾಸ್‌ವರ್ಡ್',
-    confirmPassword: 'ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ದೃಢೀಕರಿಸಿ',
-    passwordHint: 'ಕನಿಷ್ಠ 8 ಅಕ್ಷರ ಬಳಸಿ. ಪಾಸ್‌ವರ್ಡ್ 72 UTF-8 ಬೈಟ್ ಮೀರಬಾರದು.',
-    passwordMismatch: 'ಎರಡೂ ಪಾಸ್‌ವರ್ಡ್‌ಗಳು ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ.',
-    passwordInvalid: 'ಕನಿಷ್ಠ 8 ಮತ್ತು ಗರಿಷ್ಠ 72 UTF-8 ಬೈಟ್‌ಗಳ ಪಾಸ್‌ವರ್ಡ್ ಬಳಸಿ.',
-    reset: 'ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಿ',
-    resetting: 'ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಲಾಗುತ್ತಿದೆ…',
-    resetSuccess: 'ನಿಮ್ಮ ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಲಾಗಿದೆ. ಲಾಗಿನ್‌ಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.',
-    invalidReset: 'ಈ ಮರುಹೊಂದಿಸುವ ಲಿಂಕ್ ಇಲ್ಲ, ಅಮಾನ್ಯವಾಗಿದೆ ಅಥವಾ ಅವಧಿ ಮುಗಿದಿದೆ. ಹೊಸ ಲಿಂಕ್ ಕೇಳಿ.',
-    signIn: 'ಲಾಗಿನ್‌ಗೆ ಹಿಂತಿರುಗಿ'
-  }
-};
-
-const registrationQuestions = {
-  en: [
-    { key: 'name', prompt: 'What is your name?', required: true },
-    { key: 'village', prompt: 'Which village or town do you live in?' },
-    { key: 'district', prompt: 'Which district is it in?' },
-    { key: 'state', prompt: 'Which state is it in?' },
-    { key: 'currentCrops', prompt: 'Which crops do you grow? You can name more than one.' }
-  ],
-  hi: [
-    { key: 'name', prompt: 'आपका नाम क्या है?', required: true },
-    { key: 'village', prompt: 'आप किस गाँव या कस्बे में रहते हैं?' },
-    { key: 'district', prompt: 'यह किस ज़िले में है?' },
-    { key: 'state', prompt: 'यह किस राज्य में है?' },
-    { key: 'currentCrops', prompt: 'आप कौन-कौन सी फसलें उगाते हैं? एक से अधिक बता सकते हैं।' }
-  ],
-  kn: [
-    { key: 'name', prompt: 'ನಿಮ್ಮ ಹೆಸರೇನು?', required: true },
-    { key: 'village', prompt: 'ನೀವು ಯಾವ ಗ್ರಾಮ ಅಥವಾ ಊರಿನಲ್ಲಿ ವಾಸಿಸುತ್ತೀರಿ?' },
-    { key: 'district', prompt: 'ಅದು ಯಾವ ಜಿಲ್ಲೆಯಲ್ಲಿದೆ?' },
-    { key: 'state', prompt: 'ಅದು ಯಾವ ರಾಜ್ಯದಲ್ಲಿದೆ?' },
-    { key: 'currentCrops', prompt: 'ನೀವು ಯಾವ ಬೆಳೆಗಳನ್ನು ಬೆಳೆಯುತ್ತೀರಿ? ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು ಹೇಳಬಹುದು.' }
-  ]
-};
-
-const serviceCopy = {
-  en: {
-    greeting: name => `Hello${name ? ` ${name}` : ''}! Welcome to your farming assistant. What help do you need today?`,
-    intro: 'I can help with weather, crop choices, crop problems, irrigation, market prices, and government schemes.',
-    title: 'Your farming assistant', start: 'Start voice assistant', listenAgain: 'Repeat welcome', stop: 'Stop speaking', talk: 'Talk to Saathi', servicesTitle: 'Choose what you need help with',
-    services: {
-      weather: ['Weather information', 'Find out whether rain is forecast today or tomorrow.', 'Open weather'],
-      crops: ['Choose a crop', 'See crop ideas using the farm details you shared.', 'Crop advice'],
-      disease: ['Crop problem', 'Describe symptoms or upload a crop photo for possible causes.', 'Check a crop problem'],
-      irrigation: ['Watering advice', 'Get a careful irrigation checklist using known details.', 'Irrigation'],
-      markets: ['Market prices', 'Search reported prices from available mandi records.', 'Check prices'],
-      schemes: ['Government schemes', 'Browse source-linked scheme records and official application links.', 'Scheme information']
-    }
-  },
-  hi: {
-    greeting: name => `नमस्कार${name ? ` ${name} जी` : ''}! आपके कृषि सहायक में स्वागत है। आज आपको किस मदद की ज़रूरत है?`,
-    intro: 'मैं मौसम, फसल चुनने, फसल की समस्या, सिंचाई, मंडी भाव और सरकारी योजनाओं में मदद कर सकता हूँ।',
-    title: 'आपका कृषि सहायक', start: 'आवाज़ सहायक शुरू करें', listenAgain: 'स्वागत फिर सुनें', stop: 'बोलना बंद करें', talk: 'साथी से बात करें', servicesTitle: 'बताएं, किस चीज़ में मदद चाहिए',
-    services: {
-      weather: ['मौसम की जानकारी', 'आज या कल बारिश की संभावना जानें।', 'मौसम देखें'],
-      crops: ['फसल चुनें', 'आपके खेत की जानकारी के आधार पर फसल के सुझाव देखें।', 'फसल सलाह'],
-      disease: ['फसल की समस्या', 'लक्षण बताएं या संभावित कारण जानने के लिए फोटो भेजें।', 'समस्या देखें'],
-      irrigation: ['सिंचाई सलाह', 'उपलब्ध जानकारी के आधार पर सिंचाई की जाँच सूची पाएं।', 'सिंचाई'],
-      markets: ['मंडी भाव', 'उपलब्ध मंडी रिकॉर्ड में दर्ज भाव खोजें।', 'भाव देखें'],
-      schemes: ['सरकारी योजनाएं', 'सत्यापित योजना रिकॉर्ड और आधिकारिक आवेदन लिंक देखें।', 'योजना जानकारी']
-    }
-  },
-  kn: {
-    greeting: name => `ನಮಸ್ಕಾರ${name ? ` ${name} ಅವರೇ` : ''}! ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕನಿಗೆ ಸ್ವಾಗತ. ಇಂದು ನಿಮಗೆ ಯಾವ ಸಹಾಯ ಬೇಕು?`,
-    intro: 'ಹವಾಮಾನ, ಬೆಳೆ ಆಯ್ಕೆ, ಬೆಳೆ ಸಮಸ್ಯೆ, ನೀರಾವರಿ, ಮಾರುಕಟ್ಟೆ ಬೆಲೆ ಮತ್ತು ಸರ್ಕಾರಿ ಯೋಜನೆಗಳ ಬಗ್ಗೆ ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.',
-    title: 'ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ', start: 'ಧ್ವನಿ ಸಹಾಯಕ ಆರಂಭಿಸಿ', listenAgain: 'ಸ್ವಾಗತವನ್ನು ಮತ್ತೆ ಕೇಳಿ', stop: 'ಮಾತು ನಿಲ್ಲಿಸಿ', talk: 'ಸಾಥಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ', servicesTitle: 'ಯಾವ ಸಹಾಯ ಬೇಕು ಎಂದು ಆಯ್ಕೆಮಾಡಿ',
-    services: {
-      weather: ['ಹವಾಮಾನ ಮಾಹಿತಿ', 'ಇಂದು ಅಥವಾ ನಾಳೆ ಮಳೆಯ ಮುನ್ಸೂಚನೆ ಇದೆಯೇ ತಿಳಿಯಿರಿ.', 'ಹವಾಮಾನ ನೋಡಿ'],
-      crops: ['ಬೆಳೆ ಆಯ್ಕೆ', 'ನೀವು ನೀಡಿದ ಹೊಲದ ವಿವರಗಳ ಆಧಾರದ ಮೇಲೆ ಬೆಳೆ ಸಲಹೆ ನೋಡಿ.', 'ಬೆಳೆ ಸಲಹೆ'],
-      disease: ['ಬೆಳೆ ಸಮಸ್ಯೆ', 'ಲಕ್ಷಣ ವಿವರಿಸಿ ಅಥವಾ ಸಾಧ್ಯ ಕಾರಣ ತಿಳಿಯಲು ಬೆಳೆ ಫೋಟೋ ಕಳುಹಿಸಿ.', 'ಬೆಳೆ ಸಮಸ್ಯೆ ನೋಡಿ'],
-      irrigation: ['ನೀರಾವರಿ ಸಲಹೆ', 'ಲಭ್ಯವಿರುವ ವಿವರಗಳ ಆಧಾರದ ಮೇಲೆ ನೀರಾವರಿ ಪರಿಶೀಲನಾ ಪಟ್ಟಿ ಪಡೆಯಿರಿ.', 'ನೀರಾವರಿ'],
-      markets: ['ಮಾರುಕಟ್ಟೆ ಬೆಲೆ', 'ಲಭ್ಯವಿರುವ ಮಂಡಿ ದಾಖಲೆಗಳಲ್ಲಿನ ವರದಿಯಾದ ಬೆಲೆ ಹುಡುಕಿ.', 'ಬೆಲೆ ನೋಡಿ'],
-      schemes: ['ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು', 'ಪರಿಶೀಲಿಸಿದ ಯೋಜನೆ ಮಾಹಿತಿ ಮತ್ತು ಅಧಿಕೃತ ಅರ್ಜಿ ಲಿಂಕ್‌ಗಳನ್ನು ನೋಡಿ.', 'ಯೋಜನೆ ಮಾಹಿತಿ']
-    }
-  }
-};
-
-const assistantCopy = {
-  en: {
-    eyebrow: 'FARMING ASSISTANT', title: 'Talk to Saathi', description: 'Ask naturally in your language. Tap the microphone, review what it heard, then send.',
-    greeting: 'How can I help you today?', composer: 'Speak or type a farming question…', send: 'Send question', microphone: 'Start listening', stopListening: 'Stop listening', listening: 'Listening… speak now',
-    listen: 'Listen', stopSpeaking: 'Stop speaking', repeat: 'Repeat', newConversation: 'New conversation', home: 'Home', ready: 'Ready to help',
-    voiceUnsupported: 'Voice recording is not available in this browser. Type your question instead.', voiceError: 'Microphone could not start or the recording failed. Check browser permission, or type your question.',
-    speechUnavailable: 'Spoken playback is not available in this language. Answers remain available as text.',
-    speechError: 'Spoken playback failed. Your answer remains available as text.', speechTooLong: 'This answer is too long for spoken playback. Read it here as text.',
-    clipTooLarge: 'The recording is too large to upload. Try a shorter message or type your question.',
-    transcribing: 'Transcribing your recording…', reviewSpeech: 'I heard you. Review the transcript, then send.',
-    voicePrivacy: 'Recording sends your audio to Sarvam AI for transcription. You can always type your question instead.',
-    askLocation: 'Which village or town should I use? I will show it for confirmation before saving.', confirmLocation: location => `Should I save “${location}” as your village or town?`, confirm: 'Confirm and save', change: 'Change location', saved: location => `I saved ${location} as your village. I’ll check your request now.`, cancel: 'Location was not saved. You can tell me a location whenever you are ready.'
-  },
-  hi: {
-    eyebrow: 'कृषि सहायक', title: 'साथी से बात करें', description: 'अपनी भाषा में सवाल पूछें। माइक्रोफ़ोन दबाएं, सुने गए शब्द जाँचें, फिर भेजें।',
-    greeting: 'आज मैं आपकी क्या मदद करूँ?', composer: 'खेती का सवाल बोलें या लिखें…', send: 'सवाल भेजें', microphone: 'सुनना शुरू करें', stopListening: 'सुनना बंद करें', listening: 'सुन रहा हूँ… अब बोलें',
-    listen: 'सुनें', stopSpeaking: 'बोलना बंद करें', repeat: 'फिर सुनें', newConversation: 'नई बातचीत', home: 'मुख्य पृष्ठ', ready: 'मदद के लिए तैयार',
-    voiceUnsupported: 'इस ब्राउज़र में आवाज़ रिकॉर्ड करना उपलब्ध नहीं है। सवाल टाइप करें।', voiceError: 'माइक्रोफ़ोन शुरू नहीं हुआ या रिकॉर्डिंग विफल हुई। अनुमति जाँचें या सवाल टाइप करें।',
-    speechUnavailable: 'इस भाषा में आवाज़ में जवाब उपलब्ध नहीं है। जवाब टेक्स्ट में पढ़ सकते हैं।',
-    speechError: 'आवाज़ में जवाब नहीं चल सका। जवाब टेक्स्ट में उपलब्ध है।', speechTooLong: 'यह जवाब आवाज़ में सुनाने के लिए बहुत लंबा है। इसे टेक्स्ट में पढ़ें।',
-    clipTooLarge: 'रिकॉर्डिंग अपलोड के लिए बहुत बड़ी है। छोटा संदेश रिकॉर्ड करें या सवाल टाइप करें।',
-    transcribing: 'रिकॉर्डिंग लिखी जा रही है…', reviewSpeech: 'आपकी बात लिख ली गई है। जाँचें, फिर भेजें।',
-    voicePrivacy: 'आवाज़ लिखने के लिए रिकॉर्डिंग Sarvam AI को भेजी जाती है। आप सवाल टाइप भी कर सकते हैं।',
-    askLocation: 'मैं किस गाँव या कस्बे का उपयोग करूँ? सहेजने से पहले पुष्टि करूँगा।', confirmLocation: location => `क्या मैं “${location}” को आपका गाँव या कस्बा सहेजूँ?`, confirm: 'पुष्टि करें और सहेजें', change: 'जगह बदलें', saved: location => `मैंने ${location} को आपके गाँव के रूप में सहेजा। अब आपके सवाल की जाँच करता हूँ।`, cancel: 'जगह नहीं सहेजी गई। तैयार होने पर बता सकते हैं।'
-  },
-  kn: {
-    eyebrow: 'ಕೃಷಿ ಸಹಾಯಕ', title: 'ಸಾಥಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ', description: 'ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಸಹಜವಾಗಿ ಕೇಳಿ. ಮೈಕ್ರೊಫೋನ್ ಒತ್ತಿ, ಕೇಳಿದ ಪದಗಳನ್ನು ಪರಿಶೀಲಿಸಿ, ನಂತರ ಕಳುಹಿಸಿ.',
-    greeting: 'ಇಂದು ನಿಮಗೆ ಯಾವ ಸಹಾಯ ಬೇಕು?', composer: 'ಕೃಷಿ ಪ್ರಶ್ನೆ ಮಾತನಾಡಿ ಅಥವಾ ಟೈಪ್ ಮಾಡಿ…', send: 'ಪ್ರಶ್ನೆ ಕಳುಹಿಸಿ', microphone: 'ಆಲಿಸಲು ಆರಂಭಿಸಿ', stopListening: 'ಆಲಿಸುವುದನ್ನು ನಿಲ್ಲಿಸಿ', listening: 'ಆಲಿಸುತ್ತಿದ್ದೇನೆ… ಈಗ ಮಾತನಾಡಿ',
-    listen: 'ಕೇಳಿ', stopSpeaking: 'ಮಾತು ನಿಲ್ಲಿಸಿ', repeat: 'ಮತ್ತೆ ಕೇಳಿ', newConversation: 'ಹೊಸ ಸಂಭಾಷಣೆ', home: 'ಮುಖ್ಯ ಪುಟ', ready: 'ಸಹಾಯಕ್ಕೆ ಸಿದ್ಧ',
-    voiceUnsupported: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್ ಲಭ್ಯವಿಲ್ಲ. ಪ್ರಶ್ನೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ.', voiceError: 'ಮೈಕ್ರೊಫೋನ್ ಆರಂಭವಾಗಲಿಲ್ಲ ಅಥವಾ ರೆಕಾರ್ಡಿಂಗ್ ವಿಫಲವಾಯಿತು. ಅನುಮತಿ ಪರಿಶೀಲಿಸಿ ಅಥವಾ ಪ್ರಶ್ನೆ ಟೈಪ್ ಮಾಡಿ.',
-    speechUnavailable: 'ಈ ಭಾಷೆಯಲ್ಲಿ ಧ್ವನಿ ಉತ್ತರ ಲಭ್ಯವಿಲ್ಲ. ಉತ್ತರವನ್ನು ಪಠ್ಯವಾಗಿ ಓದಬಹುದು.',
-    speechError: 'ಧ್ವನಿ ಉತ್ತರವನ್ನು ಪ್ಲೇ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಉತ್ತರ ಪಠ್ಯವಾಗಿ ಲಭ್ಯವಿದೆ.', speechTooLong: 'ಈ ಉತ್ತರ ಧ್ವನಿಯಾಗಿ ಕೇಳಲು ತುಂಬಾ ಉದ್ದವಾಗಿದೆ. ಪಠ್ಯವಾಗಿ ಓದಿ.',
-    clipTooLarge: 'ರೆಕಾರ್ಡಿಂಗ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ. ಚಿಕ್ಕ ಸಂದೇಶ ರೆಕಾರ್ಡ್ ಮಾಡಿ ಅಥವಾ ಪ್ರಶ್ನೆ ಟೈಪ್ ಮಾಡಿ.',
-    transcribing: 'ನಿಮ್ಮ ರೆಕಾರ್ಡಿಂಗ್ ಅನ್ನು ಬರೆಯಲಾಗುತ್ತಿದೆ…', reviewSpeech: 'ನಿಮ್ಮ ಮಾತು ಬರೆಯಲಾಗಿದೆ. ಪರಿಶೀಲಿಸಿ ನಂತರ ಕಳುಹಿಸಿ.',
-    voicePrivacy: 'ಧ್ವನಿ ಬರವಣಿಗೆಗಾಗಿ ನಿಮ್ಮ ರೆಕಾರ್ಡಿಂಗ್ Sarvam AI ಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ. ಪ್ರಶ್ನೆಯನ್ನು ಟೈಪ್ ಕೂಡ ಮಾಡಬಹುದು.',
-    askLocation: 'ಯಾವ ಗ್ರಾಮ ಅಥವಾ ಊರನ್ನು ಬಳಸಲಿ? ಉಳಿಸುವ ಮೊದಲು ನಿಮ್ಮ ದೃಢೀಕರಣ ಕೇಳುತ್ತೇನೆ.', confirmLocation: location => `“${location}” ಅನ್ನು ನಿಮ್ಮ ಗ್ರಾಮ ಅಥವಾ ಊರಾಗಿ ಉಳಿಸಬೇಕೇ?`, confirm: 'ದೃಢೀಕರಿಸಿ ಮತ್ತು ಉಳಿಸಿ', change: 'ಸ್ಥಳ ಬದಲಿಸಿ', saved: location => `${location} ಅನ್ನು ನಿಮ್ಮ ಗ್ರಾಮವಾಗಿ ಉಳಿಸಿದ್ದೇನೆ. ಈಗ ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಪರಿಶೀಲಿಸುತ್ತೇನೆ.`, cancel: 'ಸ್ಥಳವನ್ನು ಉಳಿಸಿಲ್ಲ. ಸಿದ್ಧರಾದಾಗ ಹೇಳಬಹುದು.'
-  }
-};
+import { words, serviceCopy, defaultServiceItems, assistantCopy, schemesCopy, schemeDetailLabels, schemeExtraLabels } from '../config/translations.js';
+import { authCopy, authHelpContent, verificationCopy, passwordResetCopy, registrationQuestions } from '../config/authTranslations.js';
 
 const languageStorageKey = 'farmer-saathi-language';
 const supportedLanguages = new Set(supportedLanguageCodes);
@@ -819,6 +518,14 @@ function getAuthHelpTopic(question) {
 
 function detectAuthHelpLanguage(text) {
   if (/[\u0C80-\u0CFF]/.test(text)) return 'kn';
+  if (/[\u0B80-\u0BFF]/.test(text)) return 'ta';
+  if (/[\u0C00-\u0C7F]/.test(text)) return 'te';
+  if (/[\u0A80-\u0AFF]/.test(text)) return 'gu';
+  if (/[\u0D00-\u0D7F]/.test(text)) return 'ml';
+  if (/[\u0A00-\u0A7F]/.test(text)) return 'pa';
+  if (/[\u0B00-\u0B7F]/.test(text)) return 'or';
+  if (/[\u0980-\u09FF]/.test(text)) return 'bn';
+  if (/[\u0600-\u06FF\u0750-\u08FF]/.test(text)) return 'ur';
   if (/[\u0900-\u097F]/.test(text)) return 'hi';
   return null;
 }
@@ -989,9 +696,12 @@ function AppShell({ farmer, setFarmer, onSignOut }) {
   }, []);
 
   async function changeLanguage(value) {
+    saveLanguage(value);
+    setFarmer(prev => prev ? { ...prev, preferredLanguage: value } : prev);
     try {
       const { data } = await api.put(`/farmers/profile/${farmer._id}`, { preferredLanguage: value });
       setFarmer(data.farmer);
+      saveLanguage(data.farmer.preferredLanguage);
     } catch (error) { window.alert(errorMessage(error)); }
   }
 
@@ -1040,8 +750,15 @@ function VoiceWelcome({ farmer }) {
   const [speechNotice, setSpeechNotice] = useState('');
   const firstName = farmer?.name?.split(' ')[0] || '';
   const serviceLinks = [
-    ['weather', '/weather', Cloud], ['crops', '/crops', Sprout], ['disease', '/disease', Leaf],
-    ['irrigation', '/irrigation', Droplets], ['markets', '/markets', BadgeIndianRupee], ['schemes', '/schemes', Landmark]
+    ['weather', '/weather', Cloud],
+    ['crops', '/crops', Sprout],
+    ['disease', '/disease', FileWarning],
+    ['irrigation', '/irrigation', Droplets],
+    ['markets', '/markets', BadgeIndianRupee],
+    ['schemes', '/schemes', Landmark],
+    ['assistant', '/assistant', MessageCircle],
+    ['cropHealth', '/disease', Leaf],
+    ['profile', '/profile', UserRound]
   ];
 
   async function readWelcome() {
@@ -1054,14 +771,58 @@ function VoiceWelcome({ farmer }) {
   }
 
   return <Card className="voice-welcome-card">
-    <div className="voice-welcome-head"><span className="assistant-avatar"><Leaf size={19} /></span><div><span className="eyebrow">{copy.title}</span><h2>{copy.greeting(firstName)}</h2><p>{copy.intro}</p></div></div>
-    <div className="voice-welcome-actions"><button className="primary-button voice-start-button" type="button" onClick={readWelcome}><Volume2 size={19} />{copy.start}</button><button className="subtle-button voice-stop-button" type="button" onClick={stopSpeaking}><VolumeX size={17} />{copy.stop}</button><Link className="subtle-button voice-chat-link" to="/assistant"><Mic size={18} />{copy.talk}</Link></div>
+    <div className="voice-welcome-head">
+      <span className="assistant-avatar" aria-hidden="true"><Leaf size={22} /></span>
+      <div className="voice-welcome-copy">
+        <span className="eyebrow">{copy.title}</span>
+        <h2>{copy.greeting(firstName)}</h2>
+        <p>{copy.intro}</p>
+      </div>
+    </div>
+    <div className="voice-welcome-actions">
+      <button className="primary-button voice-start-button" type="button" onClick={readWelcome}>
+        <Volume2 size={18} />
+        <span>{copy.start}</span>
+      </button>
+      <button className="subtle-button voice-stop-button" type="button" onClick={stopSpeaking}>
+        <VolumeX size={17} />
+        <span>{copy.stop}</span>
+      </button>
+      <Link className="subtle-button voice-chat-link" to="/assistant">
+        <Mic size={18} />
+        <span>{copy.talk}</span>
+      </Link>
+    </div>
     {speechNotice && <p className="voice-welcome-notice" role="status">{speechNotice}</p>}
     <h3 className="voice-services-title">{copy.servicesTitle}</h3>
-    <div className="voice-service-grid">{serviceLinks.map(([key, to, Icon]) => {
-      const [title, description, action] = copy.services[key];
-      return <Link className="voice-service-card" to={to} key={key}><span className="feature-icon"><Icon size={20} /></span><b>{title}</b><span>{description}</span><strong>{action}<ArrowRight size={15} /></strong></Link>;
-    })}</div>
+    <div className="voice-service-grid">
+      {serviceLinks.map(([key, to, Icon]) => {
+        const item = copy.services?.[key] || defaultServiceItems[key];
+        const [title, description, action] = item;
+        return (
+          <Link
+            className="voice-service-card"
+            to={to}
+            key={key}
+            aria-label={`${title}: ${description}`}
+          >
+            <div className="card-top">
+              <span className="feature-icon" aria-hidden="true">
+                <Icon size={20} />
+              </span>
+            </div>
+            <div className="card-body">
+              <b className="card-title">{title}</b>
+              <span className="card-desc">{description}</span>
+            </div>
+            <div className="card-action">
+              <strong>{action}</strong>
+              <ArrowRight size={15} aria-hidden="true" />
+            </div>
+          </Link>
+        );
+      })}
+    </div>
   </Card>;
 }
 
@@ -1084,8 +845,8 @@ function Dashboard() {
       <Card className="market-summary"><div className="card-head"><div><span className="eyebrow">LOCAL MARKETS</span><h3>Reported mandi prices</h3></div><Link className="icon-link" to="/markets" aria-label="Open mandi prices"><ArrowRight size={18} /></Link></div>
         {market.loading ? <LoadingBox label="Checking market data…" /> : market.error ? <div className="empty-block"><BadgeIndianRupee size={25} /><p>{market.error}</p><Link to="/markets">Search mandi prices <ArrowRight size={14} /></Link></div> : market.data.records.length ? <><div className="price-list">{market.data.records.slice(0, 4).map((row, i) => <PriceRow key={`${row.market}-${row.commodity}-${i}`} row={row} />)}</div><MetaLine source={market.data.source} time={market.data.fetchedAt} /></> : <div className="empty-block"><BadgeIndianRupee size={25} /><p>No records matched your saved location. Search another district or crop.</p><Link to="/markets">Search market prices <ArrowRight size={14} /></Link></div>}
       </Card>
-      <Card className="feature-card crop-feature"><div className="feature-top"><span className="feature-icon"><Sprout size={20} /></span><span className="pill">PERSONALIZED</span></div><div><h3>Which crop fits your farm?</h3><p>Get ideas based on the details you’ve shared, with missing information called out.</p><Link className="text-link" to="/crops">Explore crop advice <ArrowRight size={16} /></Link></div></Card>
-      <Card className="feature-card ask-feature"><div className="feature-top"><span className="feature-icon"><MessageCircle size={20} /></span><span className="pill pill-soft">HERE TO HELP</span></div><div><h3>A question came up?</h3><p>Ask in your preferred language about crops, weather, soil or farm care.</p><Link className="text-link" to="/assistant">Ask Saathi <ArrowRight size={16} /></Link></div></Card>
+      <Link to="/crops" className="card feature-card crop-feature"><div className="feature-top"><span className="feature-icon"><Sprout size={20} /></span><span className="pill">PERSONALIZED</span></div><div><h3>Which crop fits your farm?</h3><p>Get ideas based on the details you’ve shared, with missing information called out.</p><span className="text-link">Explore crop advice <ArrowRight size={16} /></span></div></Link>
+      <Link to="/assistant" className="card feature-card ask-feature"><div className="feature-top"><span className="feature-icon"><MessageCircle size={20} /></span><span className="pill pill-soft">HERE TO HELP</span></div><div><h3>A question came up?</h3><p>Ask in your preferred language about crops, weather, soil or farm care.</p><span className="text-link">Ask Saathi <ArrowRight size={16} /></span></div></Link>
       <Card className="tip-card"><div className="tip-icon"><ShieldCheck size={20} /></div><div><span className="eyebrow">A NOTE ON ADVICE</span><p>Weather and market information shows its source and date. AI suggestions are guidance, not a confirmed diagnosis or local expert assessment.</p></div></Card>
     </div>
     <div className="dashboard-history"><FarmHistoryPanel compact /></div>
@@ -1193,21 +954,9 @@ function MandiTrendCharts({ trends, source }) {
 function SchemesPage() {
   const { farmer } = useFarm();
   const language = supportedLanguages.has(farmer?.preferredLanguage) ? farmer.preferredLanguage : 'en';
-  const copy = localizedCopy({
-    en: { eyebrow: 'FARMER SUPPORT', title: 'Government schemes', description: 'Browse stored, source-linked scheme records. Results are not an eligibility decision.', loading: 'Loading scheme catalogue…', search: 'Search schemes', state: 'State', category: 'Category', allStates: 'All states', allCategories: 'All categories', central: 'Central scheme', stateScheme: 'State scheme', relevant: 'Potentially relevant', details: 'View scheme details', requirements: 'Check requirements', apply: 'How to apply', official: 'Visit official website', source: 'Verified source', close: 'Close details', noResults: 'No matching scheme records were found.', myScheme: 'Search more schemes on myScheme', income: 'Income support', insurance: 'Crop insurance', water: 'Water management' },
-    hi: { eyebrow: 'किसान सहायता', title: 'सरकारी योजनाएं', description: 'स्रोत लिंक वाली संग्रहीत योजना जानकारी देखें। परिणाम पात्रता का निर्णय नहीं हैं।', loading: 'योजना सूची लोड हो रही है…', search: 'योजना खोजें', state: 'राज्य', category: 'श्रेणी', allStates: 'सभी राज्य', allCategories: 'सभी श्रेणियाँ', central: 'केंद्र योजना', stateScheme: 'राज्य योजना', relevant: 'संभवतः संबंधित', details: 'योजना विवरण देखें', requirements: 'योग्यता और शर्तें', apply: 'आवेदन कैसे करें', official: 'आधिकारिक वेबसाइट देखें', source: 'सत्यापित स्रोत', close: 'विवरण बंद करें', noResults: 'मिलती हुई योजना नहीं मिली।', myScheme: 'myScheme पर और योजनाएँ खोजें', income: 'आय सहायता', insurance: 'फसल बीमा', water: 'जल प्रबंधन' },
-    kn: { eyebrow: 'ರೈತರ ನೆರವು', title: 'ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು', description: 'ಅಧಿಕೃತ ಮೂಲ ಲಿಂಕ್‌ಗಳೊಂದಿಗೆ ಉಳಿಸಿದ ಯೋಜನೆ ಮಾಹಿತಿಯನ್ನು ನೋಡಿ. ಫಲಿತಾಂಶಗಳು ಅರ್ಹತೆಯ ತೀರ್ಮಾನವಲ್ಲ.', loading: 'ಯೋಜನೆಗಳ ಪಟ್ಟಿಯನ್ನು ತರಲಾಗುತ್ತಿದೆ…', search: 'ಯೋಜನೆ ಹುಡುಕಿ', state: 'ರಾಜ್ಯ', category: 'ವಿಭಾಗ', allStates: 'ಎಲ್ಲಾ ರಾಜ್ಯಗಳು', allCategories: 'ಎಲ್ಲಾ ವಿಭಾಗಗಳು', central: 'ಕೇಂದ್ರ ಯೋಜನೆ', stateScheme: 'ರಾಜ್ಯ ಯೋಜನೆ', relevant: 'ಸಂಭವ್ಯವಾಗಿ ಸಂಬಂಧಿಸಬಹುದು', details: 'ಯೋಜನೆ ವಿವರ ನೋಡಿ', requirements: 'ಅರ್ಹತೆ ಪರಿಶೀಲಿಸಿ', apply: 'ಅರ್ಜಿ ಹೇಗೆ', official: 'ಅಧಿಕೃತ ವೆಬ್‌ಸೈಟ್', source: 'ಪರಿಶೀಲಿಸಿದ ಮೂಲ', close: 'ವಿವರ ಮುಚ್ಚಿ', noResults: 'ಹೊಂದುವ ಯೋಜನೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.', myScheme: 'myScheme ನಲ್ಲಿ ಇನ್ನಷ್ಟು ಯೋಜನೆ ಹುಡುಕಿ', income: 'ಆದಾಯ ಸಹಾಯ', insurance: 'ಬೆಳೆ ವಿಮೆ', water: 'ನೀರಿನ ವ್ಯವಸ್ಥೆ' }
-  }, language);
-  const detailLabels = language === 'kn'
-    ? { intendedFor: 'ಯಾರಿಗೆ', eligibility: 'ಅರ್ಹತೆ', benefits: 'ಪ್ರಯೋಜನಗಳು', documents: 'ಅಗತ್ಯ ದಾಖಲೆಗಳು', notEligibility: 'ಅರ್ಹತೆ ದೃಢೀಕರಣವಲ್ಲ', preferred: 'ಕನ್ನಡ ಅನುವಾದ', original: 'ಮೂಲ ಇಂಗ್ಲಿಷ್', translatedNotice: 'ಇದು ಮೂಲ ಮಾಹಿತಿಯ ಅನುವಾದಿತ ವಿವರಣೆ; ಅಧಿಕೃತ ಸರ್ಕಾರಿ ಅನುವಾದವಲ್ಲ. ಸ್ಥಳೀಯ ಭಾಷಾ ಪರಿಶೀಲನೆ ಬಾಕಿಯಿದೆ.', unavailableNotice: 'ಈ ಭಾಷೆಯ ಅನುವಾದ ಲಭ್ಯವಿಲ್ಲ. ಮೂಲ ಇಂಗ್ಲಿಷ್ ವಿಷಯವನ್ನು ತೋರಿಸಲಾಗಿದೆ.' }
-    : language === 'hi'
-      ? { intendedFor: 'किसके लिए', eligibility: 'पात्रता', benefits: 'लाभ', documents: 'ज़रूरी दस्तावेज़', notEligibility: 'पात्रता की पुष्टि नहीं', preferred: 'हिंदी अनुवाद', original: 'मूल अंग्रेज़ी', translatedNotice: 'यह मूल जानकारी का अनुवादित विवरण है, आधिकारिक सरकारी अनुवाद नहीं। स्थानीय भाषा की समीक्षा बाकी है।', unavailableNotice: 'इस भाषा में अनुवाद उपलब्ध नहीं है। मूल अंग्रेज़ी सामग्री दिखाई गई है।' }
-      : { intendedFor: 'Who it is for', eligibility: 'Eligibility', benefits: 'Benefits', documents: 'Required documents', notEligibility: 'not eligibility confirmation', preferred: 'Selected language', original: 'Original English', translatedNotice: 'This is a translated explanation of the source, not an official government translation. Native-speaker review is pending.', unavailableNotice: 'A translation is not available in this language. Original English content is shown.' };
-  const extraLabels = language === 'kn'
-    ? { catalogue: 'ಮೂಲ ಹೊಂದಿರುವ ಯೋಜನೆಗಳ ಪಟ್ಟಿ', verified: 'ಮೂಲ ಪರಿಶೀಲಿಸಿದ ದಿನಾಂಕ:', karnataka: 'ಕರ್ನಾಟಕ', allIndia: 'ಭಾರತದಾದ್ಯಂತ' }
-    : language === 'hi'
-      ? { catalogue: 'स्रोत-सहित योजना सूची', verified: 'स्रोत जाँच की तारीख:', karnataka: 'कर्नाटक', allIndia: 'पूरे भारत में' }
-      : { catalogue: 'Source-linked scheme catalogue', verified: 'Source checked:', karnataka: 'Karnataka', allIndia: 'All India' };
+  const copy = localizedCopy(schemesCopy, language);
+  const detailLabels = localizedCopy(schemeDetailLabels, language);
+  const extraLabels = localizedCopy(schemeExtraLabels, language);
   const [query, setQuery] = useState('');
   const [state, setState] = useState(farmer?.state || '');
   const [category, setCategory] = useState('');
@@ -1371,19 +1120,19 @@ function AssistantPage() {
 
   function handleVoiceCommand(message) {
     const text = message.toLocaleLowerCase();
-    if (/^(repeat|दोहराएं|पुनः सुनाएं|ಮತ್ತೆ ಹೇಳಿ|ಮತ್ತೆ ಕೇಳಿ)$/.test(text)) {
+    if (/^(repeat|दोहराएं|पुनः सुनाएं|ಮತ್ತೆ ಹೇಳಿ|ಮತ್ತೆ ಕೇಳಿ|மீண்டும்|మళ్ళీ వినండి|पुन्हा सांगा|আবার শুনুন|ફરી સાંભળો|വീണ്ടും കേൾക്കുക|ਮੁੜ ਸੁਣੋ|ପୁଣି ଶୁଣନ୍ତୁ|পুনৰ শুনক|دوبارہ سنیں)$/.test(text)) {
       const lastAssistant = [...messages].reverse().find(item => item.role === 'assistant');
       if (lastAssistant) speak(lastAssistant.answer);
       return true;
     }
-    if (/^(home|main menu|मुख्य पृष्ठ|होम|ಮುಖ್ಯ ಪುಟ|ಹೋಮ್)$/.test(text)) { navigate('/dashboard'); return true; }
-    if (/^(stop speaking|रुकिए|बोलना बंद करें|ಮಾತು ನಿಲ್ಲಿಸಿ|ನಿಲ್ಲಿಸಿ)$/.test(text)) { stopAudio(); return true; }
-    if (/^(new conversation|नई बातचीत|ಹೊಸ ಸಂಭಾಷಣೆ)$/.test(text)) { startNewConversation(); return true; }
-    if (/weather|हवामान|मौसम|हवामान|ಹವಾಮಾನ|मौसम/.test(text)) { navigate('/weather'); return true; }
-    if (/mandi|market|भाव|मंडी|ಬೆಲೆ|ಮಾರುಕಟ್ಟೆ/.test(text)) { navigate('/markets'); return true; }
-    if (/crop disease|crop problem|रोग|बीमारी|ಬೆಳೆ ಸಮಸ್ಯೆ|ರೋಗ/.test(text)) { navigate('/disease'); return true; }
-    if (/irrigation|supply|सिंचाई|पानी|ನೀರಾವರಿ/.test(text)) { navigate('/irrigation'); return true; }
-    if (/crop recommendation|choose crop|फसल चुन|फसल सलाह|ಬೆಳೆ ಆಯ್ಕೆ|ಬೆಳೆ ಸಲಹೆ/.test(text)) { navigate('/crops'); return true; }
+    if (/^(home|main menu|मुख्य पृष्ठ|होम|ಮುಖ್ಯ ಪುಟ|ಹೋಮ್|முகப்பு|ప్రధాన పేజీ|প্রধান পাতা|ਮੁੱਖ ਪੰਨਾ|مرکزی صفحہ)$/.test(text)) { navigate('/dashboard'); return true; }
+    if (/^(stop speaking|रुकिए|बोलना बंद करें|ಮಾತು ನಿಲ್ಲಿಸಿ|ನಿಲ್ಲಿಸಿ|நிறுத்து|ఆపండి|थांबवा|বন্ধ করুন|બંધ કરો|നിർത്തുക|ਬੰਦ ਕਰੋ|ବନ୍ଦ କରନ୍ତୁ|কোৱা বন্ধ কৰক|بولنا بند کریں)$/.test(text)) { stopAudio(); return true; }
+    if (/^(new conversation|नई बातचीत|ಹೊಸ ಸಂಭಾಷಣೆ|புதிய உரையாடல்|కొత్త సంభాషణ|नवीन संभाषण|নতুন বার্তালাপ|નવી વાતચીત|പുതിയ സംഭാഷണം|ਨਵੀਂ ਗੱਲਬਾਤ|ନୂଆ କଥାବାର୍ତ୍ତା|নতুন কথোপকথন|نئی گفتگو)$/.test(text)) { startNewConversation(); return true; }
+    if (/weather|हवामान|मौसम|ಹವಾಮಾನ|வானிலை|వాతావరణం|আবহাওয়া|હવામાન|കാലാവസ്ഥ|ਮੌਸਮ|ପାଣିପାଗ|বতৰ|موسم/.test(text)) { navigate('/weather'); return true; }
+    if (/mandi|market|भाव|मंडी|ಬೆಲೆ|ಮಾರುಕಟ್ಟೆ|சந்தை|మార్కెట్|বাজার|બજાર|വിപണി|ਮੰਡੀ|ମଣ୍ଡି|বজাৰ|منڈی/.test(text)) { navigate('/markets'); return true; }
+    if (/crop disease|crop problem|रोग|बीमारी|ಬೆಳೆ ಸಮಸ್ಯೆ|ರೋಗ|நோய்|తెగులు|कीड|রোগ|રોગ|രോഗം|ਬਿਮਾਰੀ|ରୋଗ|ৰোগ|بیماری/.test(text)) { navigate('/disease'); return true; }
+    if (/irrigation|supply|सिंचाई|पानी|ನೀರಾವರಿ|நீர்ப்பாசனம்|నీటిపారుదల|सिंचन|সেচ|સિંચાઈ|ജലസേചനം|ਸਿੰਚਾਈ|ଜଳସେଚନ|জলসিঞ্চন|آبپاشی/.test(text)) { navigate('/irrigation'); return true; }
+    if (/crop recommendation|choose crop|फसल चुन|फसल सलाह|ಬೆಳೆ ಆಯ್ಕೆ|ಬೆಳೆ ಸಲಹೆ|பயிர்|పంట|पीक सल्ला|ফসল|પાક|വിള|ਫ਼ਸਲ|ଫସଲ|শস্য|فصل/.test(text)) { navigate('/crops'); return true; }
     return false;
   }
 
@@ -1494,6 +1243,11 @@ function AssistantPage() {
 
   async function startListening() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setSpeechError(copy.voiceUnsupported);
+      return;
+    }
+    const langDef = languageConfig[language];
+    if (langDef && !langDef.sttSupported) {
       setSpeechError(copy.voiceUnsupported);
       return;
     }

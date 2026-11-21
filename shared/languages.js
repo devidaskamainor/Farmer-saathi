@@ -38,12 +38,22 @@ const sarvamTtsVoices = {
   te: { languageCode: 'te-IN', model: 'bulbul:v4-flash', speaker: 'kavitha_te_conversation' }
 };
 
+const sarvamSttSupportedCodes = new Set(['en', 'bn', 'gu', 'hi', 'kn', 'ml', 'mr', 'or', 'pa', 'ta', 'te', 'ks']);
+
+export const targetLanguageCodes = Object.freeze([
+  'en', 'kn', 'hi', 'ta', 'te', 'mr', 'bn', 'gu', 'ml', 'pa', 'or', 'as', 'ur'
+]);
+
 export const languageConfig = Object.freeze(Object.fromEntries(
   Object.entries(definitions).map(([code, details]) => [
     code,
     Object.freeze({
       ...details,
       id: code,
+      code,
+      textSupported: true,
+      sttSupported: sarvamSttSupportedCodes.has(code),
+      ttsSupported: Boolean(sarvamTtsVoices[code]),
       sarvamSttLocale: code === 'ks' ? 'ks-IN' : code === 'or' ? 'od-IN' : details.locale,
       sarvamTts: sarvamTtsVoices[code] ? Object.freeze(sarvamTtsVoices[code]) : null,
       aiSupport: 'prompted-unverified',
@@ -54,8 +64,16 @@ export const languageConfig = Object.freeze(Object.fromEntries(
 ));
 
 export const supportedLanguageCodes = Object.freeze(Object.keys(languageConfig));
+
+const remainingCodes = supportedLanguageCodes.filter(c => !targetLanguageCodes.includes(c));
+const selectorOrder = [...targetLanguageCodes, ...remainingCodes];
+
 export const languageOptions = Object.freeze(
-  supportedLanguageCodes.map(code => Object.freeze({ code, ...languageConfig[code], label: languageConfig[code].nativeName }))
+  selectorOrder.map(code => Object.freeze({
+    code,
+    ...languageConfig[code],
+    label: code === 'en' ? 'English' : `${languageConfig[code].nativeName} (${languageConfig[code].englishName})`
+  }))
 );
 
 export function getLanguageDefinition(language) {
