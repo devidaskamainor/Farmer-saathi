@@ -4,7 +4,7 @@ import {
   Activity, ArrowRight, BadgeIndianRupee, CalendarDays, Check, ChevronDown, ChevronLeft,
   Cloud, CloudRain, Droplets, FileWarning, Globe2, House, Leaf, LoaderCircle, LogOut, MapPin,
   Landmark, Menu, MessageCircle, Mic, MicOff, Pencil, Plus, Save, Search, Send, ShieldCheck, Sprout, Sun,
-  Trash2, Upload, UserRound, Volume2, VolumeX, Wind
+  Trash2, Upload, UserRound, Volume2, VolumeX, Wind, X
 } from 'lucide-react';
 import { api, errorMessage } from '../services/api.js';
 import { createSpeechRecognition, speakText, stopSpeaking } from '../services/voice.js';
@@ -310,6 +310,136 @@ function FacebookIcon() {
   </svg>;
 }
 
+const STORAGE_SOCIAL_ACCOUNTS_KEY = 'farmer_saathi_saved_social_accounts';
+
+function getStoredSocialAccounts() {
+  try {
+    const stored = localStorage.getItem(STORAGE_SOCIAL_ACCOUNTS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return [
+    { name: 'Devidas Kamainor', email: 'devdevudevidaskaminor@gmail.com', avatarColor: '#ea4335' }
+  ];
+}
+
+function saveStoredSocialAccount(account) {
+  try {
+    const current = getStoredSocialAccounts().filter(a => a.email.toLowerCase() !== account.email.toLowerCase());
+    const updated = [account, ...current].slice(0, 5);
+    localStorage.setItem(STORAGE_SOCIAL_ACCOUNTS_KEY, JSON.stringify(updated));
+  } catch {}
+}
+
+function SocialAccountModal({ provider, language, copy, busy, onSelect, onClose }) {
+  const isGoogle = provider === 'google';
+  const accounts = getStoredSocialAccounts();
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customEmail, setCustomEmail] = useState('');
+  const [customName, setCustomName] = useState('');
+
+  const title = isGoogle
+    ? (language === 'kn' ? 'ಖಾತೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ' : language === 'hi' ? 'खाता चुनें' : language === 'mr' ? 'खाते निवडा' : 'Choose an account')
+    : (language === 'kn' ? 'Facebook ನೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ' : language === 'hi' ? 'Facebook से लॉग इन करें' : language === 'mr' ? 'Facebook सह लॉग इन करा' : 'Log in with Facebook');
+
+  const subtitle = isGoogle
+    ? (language === 'kn' ? 'Farmer Saathi ಗೆ ಮುಂದುವರಿಯಲು' : language === 'hi' ? 'Farmer Saathi पर जारी रखने के लिए' : language === 'mr' ? 'Farmer Saathi वर पुढे जाण्यासाठी' : 'to continue to Farmer Saathi')
+    : (language === 'kn' ? 'ಮುಂದುವರಿಯಲು ಖಾತೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ' : language === 'hi' ? 'जारी रखने के लिए खाता चुनें' : language === 'mr' ? 'पुढे जाण्यासाठी खाते निवडा' : 'Select an account to continue');
+
+  const useAnotherText = isGoogle
+    ? (language === 'kn' ? 'ಮತ್ತೊಂದು ಖಾತೆಯನ್ನು ಬಳಸಿ' : language === 'hi' ? 'दूसरे खाते का उपयोग करें' : language === 'mr' ? 'दुसरे खाते वापरा' : 'Use another account')
+    : (language === 'kn' ? 'ಮತ್ತೊಂದು ಖಾತೆಯೊಂದಿಗೆ ಲಾಗಿನ್ ಮಾಡಿ' : language === 'hi' ? 'दूसरे खाते से लॉग इन करें' : language === 'mr' ? 'दुसऱ्या खात्याने लॉग इन करा' : 'Log in with another account');
+
+  const disclaimer = isGoogle
+    ? (language === 'kn' ? 'ಮುಂದುವರಿಯಲು, Google ನಿಮ್ಮ ಹೆಸರು, ಇಮೇಲ್ ವಿಳಾಸ ಮತ್ತು ಭಾಷೆಯ ಆದ್ಯತೆಯನ್ನು Farmer Saathi ನೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳುತ್ತದೆ.' : language === 'hi' ? 'जारी रखने के लिए, Google आपका नाम, ईमेल पता और भाषा प्राथमिकता Farmer Saathi के साथ साझा करेगा।' : 'To continue, Google will share your name, email address, and language preference with Farmer Saathi.')
+    : (language === 'kn' ? 'Farmer Saathi ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.' : language === 'hi' ? 'Farmer Saathi आपका नाम और ईमेल पता प्राप्त करेगा।' : 'Farmer Saathi will receive your name and email address.');
+
+  function submitCustom(e) {
+    e.preventDefault();
+    if (!customEmail.trim()) return;
+    onSelect({
+      email: customEmail.trim(),
+      name: customName.trim() || customEmail.trim().split('@')[0],
+      avatarColor: isGoogle ? '#4285f4' : '#1877f2'
+    });
+  }
+
+  return <div className="social-modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="social-account-card">
+      <button type="button" className="social-account-close" onClick={onClose} aria-label="Close" disabled={busy}>
+        <X size={18} />
+      </button>
+
+      <div className="social-account-header">
+        <span className="social-account-logo">{isGoogle ? <GoogleIcon /> : <FacebookIcon />}</span>
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </div>
+
+      <div className="social-account-list">
+        {accounts.map(acc => <button
+          type="button"
+          key={acc.email}
+          className="social-account-item"
+          onClick={() => onSelect(acc)}
+          disabled={busy}
+        >
+          <span className="social-account-avatar" style={{ background: acc.avatarColor || (isGoogle ? '#ea4335' : '#1877f2') }}>
+            {acc.name?.[0]?.toUpperCase() || acc.email[0].toUpperCase()}
+          </span>
+          <div className="social-account-info">
+            <span className="social-account-name">{acc.name}</span>
+            <span className="social-account-email">{acc.email}</span>
+          </div>
+          <ChevronLeft className="social-account-chevron" style={{ transform: 'rotate(180deg)' }} size={16} />
+        </button>)}
+
+        {!showCustomInput ? (
+          <button
+            type="button"
+            className="social-account-custom-toggle"
+            onClick={() => setShowCustomInput(true)}
+            disabled={busy}
+          >
+            <span className="social-account-custom-icon"><UserRound size={18} /></span>
+            <span>{useAnotherText}</span>
+          </button>
+        ) : (
+          <form className="social-account-custom-form" onSubmit={submitCustom}>
+            <input
+              type="email"
+              className="social-account-custom-input"
+              placeholder={language === 'hi' ? 'ईमेल पता दर्ज करें' : language === 'kn' ? 'ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ನಮೂದಿಸಿ' : 'Enter email address'}
+              value={customEmail}
+              onChange={e => setCustomEmail(e.target.value)}
+              required
+              autoFocus
+            />
+            <input
+              type="text"
+              className="social-account-custom-input"
+              placeholder={language === 'hi' ? 'आपका नाम (वैकल्पिक)' : language === 'kn' ? 'ನಿಮ್ಮ ಹೆಸರು (ಐಚ್ಛಿಕ)' : 'Your name (optional)'}
+              value={customName}
+              onChange={e => setCustomName(e.target.value)}
+            />
+            <button className="primary-button" type="submit" disabled={busy || !customEmail.trim()}>
+              {busy ? <LoaderCircle className="spin" size={16} /> : null}
+              {copy.continue || 'Continue'}
+              <ArrowRight size={16} />
+            </button>
+          </form>
+        )}
+      </div>
+
+      <div className="social-account-footer">
+        <p>{disclaimer}</p>
+      </div>
+    </div>
+  </div>;
+}
+
 function AuthPage({ onAuthenticated }) {
   const [register, setRegister] = useState(false);
   const [mode, setMode] = useState('simple');
@@ -320,6 +450,7 @@ function AuthPage({ onAuthenticated }) {
   const [language, setLanguage] = useState(savedLanguage || getBrowserHelpLanguage());
   const [showLanguageChoice, setShowLanguageChoice] = useState(!savedLanguage);
   const [languageSearch, setLanguageSearch] = useState('');
+  const [socialModal, setSocialModal] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', password: '', village: '', district: '', state: '', currentCrops: '' });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -457,24 +588,30 @@ function AuthPage({ onAuthenticated }) {
     finally { setBusy(false); }
   }
 
-  async function handleSocialAuth(provider) {
+  function handleSocialAuth(provider) {
     setError('');
     setNotice('');
-    const promptText = provider === 'google'
-      ? (language === 'kn' ? 'ಮುಂದುವರಿಯಲು ನಿಮ್ಮ Google ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ನಮೂದಿಸಿ:' : language === 'hi' ? 'जारी रखने के लिए अपना Google ईमेल दर्ज करें:' : language === 'mr' ? 'पुढे जाण्यासाठी आपला Google ईमेल प्रविष्ट करा:' : 'Enter your Google email address to continue:')
-      : (language === 'kn' ? 'ಮುಂದುವರಿಯಲು ನಿಮ್ಮ Facebook ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ನಮೂದಿಸಿ:' : language === 'hi' ? 'जारी रखने के लिए अपना Facebook ईमेल दर्ज करें:' : language === 'mr' ? 'पुढे जाण्यासाठी आपला Facebook ईमेल प्रविष्ट करा:' : 'Enter your Facebook email address to continue:');
-    
-    const email = window.prompt(promptText, form.email || '');
-    if (!email || !email.trim()) return;
+    if (provider === 'google' && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+      const redirectUri = `${window.location.origin}/dashboard`;
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(import.meta.env.VITE_GOOGLE_CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
+      window.location.href = googleAuthUrl;
+      return;
+    }
+    setSocialModal(provider);
+  }
 
+  async function handleSelectSocialAccount(account) {
     setBusy(true);
+    setError('');
     try {
       const { data } = await api.post('/auth/social', {
-        provider,
-        email: email.trim(),
-        name: form.name.trim() || email.trim().split('@')[0],
+        provider: socialModal || 'google',
+        email: account.email.trim(),
+        name: account.name?.trim() || account.email.trim().split('@')[0],
         preferredLanguage: language
       });
+      saveStoredSocialAccount(account);
+      setSocialModal(null);
       onAuthenticated(data);
     } catch (e) {
       setError(errorMessage(e));
@@ -625,6 +762,7 @@ function AuthPage({ onAuthenticated }) {
         <AuthHelp initialLanguage={language} onLanguageChange={onAuthLanguageChange} />
       </>}
     </div></section>
+    {socialModal && <SocialAccountModal provider={socialModal} language={language} copy={copy} busy={busy} onSelect={handleSelectSocialAccount} onClose={() => setSocialModal(null)} />}
   </main>;
 }
 
