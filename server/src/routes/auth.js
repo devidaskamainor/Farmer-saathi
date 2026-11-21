@@ -7,6 +7,7 @@ import {
   authenticateSocialAccount, createEmailVerification, createPasswordReset, deleteSession, loginAccount,
   registerAccount, resetPassword, validateEmailAddress, verifyEmail
 } from '../services/auth.js';
+import { generateFarmerJwt } from '../services/jwt.js';
 import { parseSessionCookie, SESSION_COOKIE_NAME, sessionCookieOptions, SESSION_DURATION_DAYS } from '../services/authSessions.js';
 import { HttpError } from '../utils/http.js';
 import { supportedLanguages } from '../config/languages.js';
@@ -50,7 +51,7 @@ router.post('/login', async (req, res, next) => {
   try {
     const account = await loginAccount(getDatabasePool(), req.body || {});
     setSessionCookie(res, account.token);
-    res.json({ farmer: account.farmer });
+    res.json({ farmer: account.farmer, token: generateFarmerJwt(account.farmer) });
   } catch (error) { next(error); }
 });
 
@@ -64,11 +65,11 @@ router.post('/social', async (req, res, next) => {
       preferredLanguage
     });
     setSessionCookie(res, result.token);
-    res.json({ farmer: result.farmer });
+    res.json({ farmer: result.farmer, token: generateFarmerJwt(result.farmer) });
   } catch (error) { next(error); }
 });
 
-router.get('/session', requireAuth, (req, res) => res.json({ farmer: req.farmer }));
+router.get('/session', requireAuth, (req, res) => res.json({ farmer: req.farmer, token: generateFarmerJwt(req.farmer) }));
 
 router.post('/password/forgot', passwordResetRequestLimit, async (req, res, next) => {
   try {
@@ -129,7 +130,7 @@ router.post('/verify', async (req, res, next) => {
     const result = await verifyEmail(getDatabasePool(), token);
     if (!result) return res.status(400).json({ message: 'This verification link is invalid or expired. Request a new link and try again.' });
     setSessionCookie(res, result.token);
-    res.json({ farmer: result.farmer });
+    res.json({ farmer: result.farmer, token: generateFarmerJwt(result.farmer) });
   } catch (error) { next(error); }
 });
 
