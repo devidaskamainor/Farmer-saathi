@@ -66,6 +66,9 @@ export function isFakeEmailPattern(localPart, domain) {
 }
 
 export function validateEmailAddress(email, { allowTestEnvironment = true } = {}) {
+  if (email === null || email === undefined || typeof email !== 'string') {
+    throw new HttpError(400, 'Enter a valid email address.');
+  }
   const normalizedEmail = normalizeEmail(email);
 
   // RFC basic pattern check
@@ -127,14 +130,19 @@ export function validateEmailAddress(email, { allowTestEnvironment = true } = {}
   return normalizedEmail;
 }
 
-export function validateSocialAccount(provider, { email, id }) {
+export function validateSocialAccount(provider, account = {}) {
+  const { email, id } = account || {};
   const normProvider = String(provider || '').trim().toLowerCase();
   if (!['google', 'facebook', 'github', 'apple', 'microsoft', 'other'].includes(normProvider)) {
     throw new HttpError(400, 'Supported social providers are Google, Facebook, GitHub, Apple, and Microsoft.');
   }
 
+  if (!email || typeof email !== 'string') {
+    throw new HttpError(400, 'Enter a valid email address.');
+  }
+
   const normalized = normalizeEmail(email);
-  const domain = normalized.split('@')[1];
+  const domain = normalized.split('@')[1] || '';
 
   if (normProvider === 'google' && (domain === 'facebook.com' || domain === 'fb.com')) {
     throw new HttpError(400, 'Please sign in with a valid Google account or Gmail address.');

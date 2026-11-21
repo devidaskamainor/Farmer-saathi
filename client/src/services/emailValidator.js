@@ -81,11 +81,17 @@ export function validateEmailClient(email, language = 'en') {
 }
 
 export function validateSocialLoginClient(provider, email, language = 'en') {
+  if (!email || typeof email !== 'string') {
+    return {
+      valid: false,
+      error: language === 'kn' ? 'ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ನಮೂದಿಸಿ.' : language === 'hi' ? 'ईमेल पता दर्ज करें।' : 'Please enter your email address.'
+    };
+  }
   const emailCheck = validateEmailClient(email, language);
   if (!emailCheck.valid) return emailCheck;
 
   const normProvider = String(provider || '').trim().toLowerCase();
-  const domain = emailCheck.email.split('@')[1];
+  const domain = emailCheck.email.split('@')[1] || '';
 
   if (normProvider === 'google' && (domain === 'facebook.com' || domain === 'fb.com')) {
     return {

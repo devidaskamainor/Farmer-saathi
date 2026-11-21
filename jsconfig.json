@@ -10,7 +10,9 @@
   },
   "include": [
     "client/src/**/*",
-    "client/vite.config.js"
+    "client/vite.config.js",
+    "server/src/**/*",
+    "server/test/**/*"
   ],
   "exclude": [
     "node_modules",
