@@ -70,9 +70,9 @@ export default function App() {
     if (farmer?.preferredLanguage && supportedLanguages.has(farmer.preferredLanguage)) saveLanguage(farmer.preferredLanguage);
   }, [farmer?.preferredLanguage]);
 
-  const onAuthenticated = data => {
+  const onAuthenticated = (data) => {
     setAuthenticated(true);
-    setFarmer(data.farmer);
+    setFarmer(data?.farmer || null);
     setProfileError('');
   };
   const signOut = async () => {

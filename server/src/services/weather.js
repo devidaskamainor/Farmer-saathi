@@ -1,4 +1,5 @@
 import { fetchJson, HttpError } from '../utils/http.js';
+import { getOrSetCache } from './cache.js';
 
 let openWeatherKeyRejected = false;
 
@@ -36,20 +37,24 @@ const weatherText = (code) => ({
 export async function getWeather(location) {
   if (!location) throw new HttpError(400, 'Add your village, district, or city to your farmer profile to request a forecast.');
 
-  const apiKey = process.env.WEATHER_API_KEY?.trim();
-  if (!apiKey || openWeatherKeyRejected) return getOpenMeteoWeather(location);
+  const cacheKey = `weather:${location.toLowerCase().trim()}`;
+  return getOrSetCache(cacheKey, async () => {
+    const apiKey = process.env.WEATHER_API_KEY?.trim();
+    if (!apiKey || openWeatherKeyRejected) return getOpenMeteoWeather(location);
 
-  try {
-    return await getOpenWeather(location, apiKey);
-  } catch (error) {
-    if (/api key/i.test(error?.message || '')) openWeatherKeyRejected = true;
-    return getOpenMeteoWeather(location);
-  }
+    try {
+      return await getOpenWeather(location, apiKey);
+    } catch (error) {
+      if (/api key/i.test(error?.message || '')) openWeatherKeyRejected = true;
+      return getOpenMeteoWeather(location);
+    }
+  }, 600);
 }
 
 export async function getPlanningWeather(location) {
   if (!location) throw new HttpError(400, 'Add your village, district, or city to your farmer profile to request a forecast.');
-  return getOpenMeteoWeather(location, 7);
+  const cacheKey = `weather:planning:${location.toLowerCase().trim()}`;
+  return getOrSetCache(cacheKey, () => getOpenMeteoWeather(location, 7), 600);
 }
 
 async function getOpenWeather(location, apiKey) {

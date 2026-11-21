@@ -13,6 +13,7 @@ import authRoutes from './routes/auth.js';
 import plannerRoutes from './routes/planner.js';
 import farmHistoryRoutes from './routes/farmHistory.js';
 import { checkDatabaseConnection } from './config/database.js';
+import { getCacheHealth } from './services/cache.js';
 
 const app = express();
 const allowedOrigins = process.env.CLIENT_ORIGIN?.split(',').map(value => value.trim()).filter(Boolean) || ['http://localhost:5173'];
@@ -77,7 +78,12 @@ app.use('/api/voice', rateLimit({ windowMs: 60 * 1000, limit: 15, standardHeader
 app.get('/api/health', async (_req, res, next) => {
   try {
     const configured = await checkDatabaseConnection();
-    res.json({ status: 'ok', database: configured ? 'connected' : 'not_configured', timestamp: new Date().toISOString() });
+    res.json({
+      status: 'ok',
+      database: configured ? 'connected' : 'not_configured',
+      cache: getCacheHealth(),
+      timestamp: new Date().toISOString()
+    });
   } catch (error) { next(error); }
 });
 app.use('/api/auth', authRoutes);
