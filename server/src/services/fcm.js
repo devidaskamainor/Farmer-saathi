@@ -1,17 +1,34 @@
-import admin from 'firebase-admin';
+import { cert, initializeApp, getApps, getApp } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 
 let firebaseApp = null;
 let messaging = null;
 const recentDispatches = [];
 
 function initFirebase() {
-  if (firebaseApp) return messaging;
+  if (messaging) return messaging;
+
+  // In test runs without explicitly enabled live FCM, preserve offline mock mode
+  if (process.env.NODE_ENV === 'test' && !process.env.ENABLE_REAL_FCM_IN_TEST) {
+    return null;
+  }
+
+  const existing = getApps().find(app => app.name === 'farmer-saathi');
+  if (existing) {
+    firebaseApp = existing;
+    messaging = getMessaging(firebaseApp);
+    return messaging;
+  }
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-  if (privateKey && privateKey.includes('\\n')) {
+  if (privateKey) {
+    privateKey = privateKey.trim();
+    if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+      privateKey = privateKey.slice(1, -1);
+    }
     privateKey = privateKey.replace(/\\n/g, '\n');
   }
 
@@ -24,20 +41,20 @@ function initFirebase() {
         : null;
 
       if (credentials) {
-        firebaseApp = admin.initializeApp({
-          credential: admin.credential.cert(credentials)
+        firebaseApp = initializeApp({
+          credential: cert(credentials)
         }, 'farmer-saathi');
-        messaging = admin.messaging(firebaseApp);
+        messaging = getMessaging(firebaseApp);
         console.info('Firebase Admin SDK initialized successfully via FIREBASE_SERVICE_ACCOUNT.');
         return messaging;
       }
     }
 
     if (projectId && clientEmail && privateKey) {
-      firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert({ projectId, clientEmail, privateKey })
+      firebaseApp = initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey })
       }, 'farmer-saathi');
-      messaging = admin.messaging(firebaseApp);
+      messaging = getMessaging(firebaseApp);
       console.info('Firebase Admin SDK initialized successfully via environment credentials.');
       return messaging;
     }
@@ -48,14 +65,27 @@ function initFirebase() {
   return null;
 }
 
+function sanitizeDataPayload(data = {}) {
+  const sanitized = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined && value !== null) {
+      sanitized[key] = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    }
+  }
+  return sanitized;
+}
+
 export function getFcmHealth() {
+  const msgr = messaging || initFirebase();
   const isConfigured = Boolean(
     process.env.FIREBASE_SERVICE_ACCOUNT ||
     (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY)
   );
+
   return {
-    configured: isConfigured && Boolean(messaging),
-    mode: messaging ? 'firebase-admin' : 'in-memory-mock',
+    configured: isConfigured && Boolean(msgr),
+    mode: msgr ? 'firebase-admin' : 'in-memory-mock',
+    projectId: process.env.FIREBASE_PROJECT_ID || 'not-set',
     recentDispatchCount: recentDispatches.length
   };
 }
@@ -65,19 +95,24 @@ export async function sendNotificationToTokens(tokens = [], { title, body, data 
     return { successCount: 0, failureCount: 0, dispatches: 0 };
   }
 
+  const sanitizedData = sanitizeDataPayload({
+    ...data,
+    click_action: data.actionUrl || '/dashboard',
+    timestamp: new Date().toISOString()
+  });
+
   const payload = {
     notification: { title, body },
-    data: {
-      ...data,
-      click_action: data.actionUrl || '/dashboard',
-      timestamp: new Date().toISOString()
-    },
+    data: sanitizedData,
     webpush: {
       notification: {
         title,
         body,
         icon,
         badge: '/favicon.ico'
+      },
+      fcmOptions: {
+        link: data.actionUrl || '/dashboard'
       }
     }
   };
@@ -90,6 +125,17 @@ export async function sendNotificationToTokens(tokens = [], { title, body, data 
         tokens,
         ...payload
       });
+
+      const invalidTokens = [];
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          const code = resp.error?.code;
+          if (code === 'messaging/invalid-registration-token' || code === 'messaging/registration-token-not-registered') {
+            invalidTokens.push(tokens[idx]);
+          }
+        }
+      });
+
       recentDispatches.push({
         type: 'multicast',
         recipientCount: tokens.length,
@@ -97,11 +143,15 @@ export async function sendNotificationToTokens(tokens = [], { title, body, data 
         body,
         successCount: response.successCount,
         failureCount: response.failureCount,
+        invalidTokens,
+        mode: 'firebase-admin',
         timestamp: new Date().toISOString()
       });
+
       return {
         successCount: response.successCount,
         failureCount: response.failureCount,
+        invalidTokens,
         mode: 'firebase-admin'
       };
     } catch (error) {
@@ -130,16 +180,25 @@ export async function sendNotificationToTokens(tokens = [], { title, body, data 
 
 export async function sendNotificationToTopic(topic = 'all_farmers', { title, body, data = {}, icon = '/favicon.ico' }) {
   const sanitizedTopic = topic.replace(/[^a-zA-Z0-9-_.~%]/g, '_');
+  const sanitizedData = sanitizeDataPayload({
+    ...data,
+    click_action: data.actionUrl || '/dashboard',
+    timestamp: new Date().toISOString()
+  });
+
   const payload = {
     topic: sanitizedTopic,
     notification: { title, body },
-    data: {
-      ...data,
-      click_action: data.actionUrl || '/dashboard',
-      timestamp: new Date().toISOString()
-    },
+    data: sanitizedData,
     webpush: {
-      notification: { title, body, icon }
+      notification: {
+        title,
+        body,
+        icon
+      },
+      fcmOptions: {
+        link: data.actionUrl || '/dashboard'
+      }
     }
   };
 
