@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import farmerRoutes from './routes/farmers.js';
 import weatherRoutes from './routes/weather.js';
 import mandiRoutes from './routes/mandi.js';
@@ -18,6 +21,8 @@ import { getCacheHealth } from './services/cache.js';
 import { getFcmHealth } from './services/fcm.js';
 
 const app = express();
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const clientDist = resolve(projectRoot, 'client/dist');
 const allowedOrigins = process.env.CLIENT_ORIGIN?.split(',').map(value => value.trim()).filter(Boolean) || ['http://localhost:5173'];
 const apiOrigin = new URL(process.env.API_PUBLIC_URL || `http://localhost:${Number(process.env.PORT) || 4000}`).origin;
 const allowedMutationOrigins = new Set([...allowedOrigins, apiOrigin]);
@@ -100,6 +105,32 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/disease', diseaseRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/schemes', schemeRoutes);
+
+// Serve production client build if available
+if (existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+}
+
+// Client-side routing fallback for non-API requests
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  const indexHtml = resolve(clientDist, 'index.html');
+  if (existsSync(indexHtml)) {
+    return res.sendFile(indexHtml);
+  }
+  const clientOrigin = process.env.CLIENT_ORIGIN?.split(',')[0] || 'http://localhost:5173';
+  if (req.accepts('html')) {
+    return res.redirect(clientOrigin);
+  }
+  res.json({
+    name: 'Farmer Saathi API',
+    status: 'ok',
+    clientUrl: clientOrigin,
+    health: '/api/health'
+  });
+});
 
 app.use((_req, res) => res.status(404).json({ message: 'This API route was not found.' }));
 app.use((error, _req, res, _next) => {
