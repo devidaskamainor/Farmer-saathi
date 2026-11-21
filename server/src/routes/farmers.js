@@ -1,9 +1,8 @@
 import { Router } from 'express';
 import { getDatabasePool } from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
-import { profileUpdates, updateFarmerProfile } from '../services/farmerProfiles.js';
+import { profileUpdates, updateFarmerProfile, validatePreferredLanguage } from '../services/farmerProfiles.js';
 import { HttpError } from '../utils/http.js';
-import { supportedLanguages } from '../config/languages.js';
 
 const router = Router();
 const allowedFields = new Set(['name', 'state', 'district', 'village', 'preferredLanguage', 'farmSize', 'soil', 'farmPlan', 'irrigationFacilities', 'currentCrops']);
@@ -25,7 +24,7 @@ router.put('/profile/:id', async (req, res, next) => {
     const body = req.body || {};
     for (const key of Object.keys(body)) if (!allowedFields.has(key)) throw new HttpError(400, `The field '${key}' cannot be updated.`);
     if (body.name !== undefined && (!String(body.name).trim() || String(body.name).length > 100)) throw new HttpError(400, 'Name must be between 1 and 100 characters.');
-    if (body.preferredLanguage !== undefined && !supportedLanguages.has(body.preferredLanguage)) throw new HttpError(400, 'Choose a language from the supported list.');
+    if (body.preferredLanguage !== undefined) validatePreferredLanguage(body.preferredLanguage);
     if (body.farmSize !== undefined && body.farmSize !== null && (!Number.isFinite(Number(body.farmSize)) || Number(body.farmSize) < 0)) throw new HttpError(400, 'Farm size must be a non-negative number.');
     validateSoil(body.soil);
     validateFarmPlan(body.farmPlan);

@@ -1,4 +1,10 @@
 import { HttpError } from '../utils/http.js';
+import { supportedLanguages } from '../config/languages.js';
+
+export function validatePreferredLanguage(language) {
+  if (!supportedLanguages.has(language)) throw new HttpError(400, 'Choose a language from the supported list.');
+  return language;
+}
 
 export function mapFarmer(row) {
   return {
