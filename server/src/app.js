@@ -12,8 +12,10 @@ import schemeRoutes from './routes/schemes.js';
 import authRoutes from './routes/auth.js';
 import plannerRoutes from './routes/planner.js';
 import farmHistoryRoutes from './routes/farmHistory.js';
+import notificationRoutes from './routes/notifications.js';
 import { checkDatabaseConnection } from './config/database.js';
 import { getCacheHealth } from './services/cache.js';
+import { getFcmHealth } from './services/fcm.js';
 
 const app = express();
 const allowedOrigins = process.env.CLIENT_ORIGIN?.split(',').map(value => value.trim()).filter(Boolean) || ['http://localhost:5173'];
@@ -82,11 +84,13 @@ app.get('/api/health', async (_req, res, next) => {
       status: 'ok',
       database: configured ? 'connected' : 'not_configured',
       cache: getCacheHealth(),
+      fcm: getFcmHealth(),
       timestamp: new Date().toISOString()
     });
   } catch (error) { next(error); }
 });
 app.use('/api/auth', authRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/farmers/history', farmHistoryRoutes);
 app.use('/api/planner', plannerRoutes);
 app.use('/api/farmers', farmerRoutes);
