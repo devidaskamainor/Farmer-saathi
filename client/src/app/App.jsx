@@ -3,7 +3,7 @@ import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigat
 import {
   Activity, ArrowRight, BadgeIndianRupee, CalendarDays, Check, ChevronDown, ChevronLeft,
   Cloud, CloudRain, Droplets, FileWarning, Globe2, House, Leaf, LoaderCircle, LogOut, MapPin,
-  Landmark, Menu, MessageCircle, Mic, MicOff, Pencil, Plus, Save, Send, ShieldCheck, Sprout, Sun,
+  Landmark, Menu, MessageCircle, Mic, MicOff, Pencil, Plus, Save, Search, Send, ShieldCheck, Sprout, Sun,
   Trash2, Upload, UserRound, Volume2, VolumeX, Wind
 } from 'lucide-react';
 import { api, errorMessage } from '../services/api.js';
@@ -304,6 +304,7 @@ function AuthPage({ onAuthenticated }) {
   const savedLanguage = readSavedLanguage();
   const [language, setLanguage] = useState(savedLanguage || getBrowserHelpLanguage());
   const [showLanguageChoice, setShowLanguageChoice] = useState(!savedLanguage);
+  const [languageSearch, setLanguageSearch] = useState('');
   const [form, setForm] = useState({ name: '', email: '', password: '', village: '', district: '', state: '', currentCrops: '' });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -328,8 +329,20 @@ function AuthPage({ onAuthenticated }) {
   async function confirmLanguage() {
     saveLanguage(language);
     setShowLanguageChoice(false);
+    setLanguageSearch('');
     await speakText(copy.languageWelcome, language);
   }
+
+  const filteredLanguages = languageOptions.filter(({ code, nativeName, englishName, label }) => {
+    if (!languageSearch.trim()) return true;
+    const query = languageSearch.trim().toLowerCase();
+    return (
+      code.toLowerCase().includes(query) ||
+      nativeName.toLowerCase().includes(query) ||
+      englishName.toLowerCase().includes(query) ||
+      label.toLowerCase().includes(query)
+    );
+  });
 
   function setFormValue(key, value) {
     setForm(previous => ({ ...previous, [key]: value }));
@@ -444,14 +457,55 @@ function AuthPage({ onAuthenticated }) {
       <div className="story-note"><Sprout size={18} /><span>{language === 'kn' ? 'ನಮ್ಮ ಆಹಾರ ಬೆಳೆಸುವ ರೈತರಿಗಾಗಿ.' : language === 'hi' ? 'हमारा भोजन उगाने वाले किसानों के लिए।' : 'Made for the people who grow our food.'}</span></div>
       <span className="story-decoration story-decoration-one" /><span className="story-decoration story-decoration-two" />
     </section>
-    <section className="auth-form-wrap"><div className="auth-form-stack">
+    <section className="auth-form-wrap"><div className={`auth-form-stack ${showLanguageChoice ? 'auth-form-stack-wide' : ''}`}>
       {showLanguageChoice ? <div className="auth-form-card language-choice-card">
-        <span className="eyebrow">FARMER SAATHI</span><h2>{copy.languageTitle}</h2><p className="muted">{copy.languageDescription}</p>
-        <div className="language-choice-list">{[...languageOptions].reverse().map(({ code, label }) => <button type="button" key={code} className={`language-choice ${language === code ? 'language-choice-selected' : ''}`} aria-pressed={language === code} onClick={() => setLanguage(code)}>{label}</button>)}</div>
-        <button className="primary-button auth-submit" onClick={confirmLanguage} type="button">{copy.continue}<ArrowRight size={18} /></button>
+        <div className="language-choice-header">
+          <span className="eyebrow">FARMER SAATHI</span>
+          <h2>{copy.languageTitle}</h2>
+          <p className="muted">{copy.languageDescription}</p>
+        </div>
+        <div className="language-search-box">
+          <Search size={15} />
+          <input
+            type="search"
+            className="language-search-input"
+            placeholder={language === 'kn' ? 'ಭಾಷೆಯನ್ನು ಹುಡುಕಿ...' : language === 'hi' ? 'भाषा खोजें...' : language === 'mr' ? 'भाषा शोधा...' : 'Search language...'}
+            value={languageSearch}
+            onChange={event => setLanguageSearch(event.target.value)}
+            aria-label="Search language"
+          />
+        </div>
+        <div className="language-choice-list" role="radiogroup" aria-label={copy.languageTitle}>
+          {filteredLanguages.map(({ code, nativeName, englishName }) => {
+            const isSelected = language === code;
+            return <button
+              type="button"
+              key={code}
+              role="radio"
+              aria-checked={isSelected}
+              className={`language-choice ${isSelected ? 'language-choice-selected' : ''}`}
+              onClick={() => setLanguage(code)}
+            >
+              <div className="language-choice-info">
+                <span className="language-native-name">{nativeName}</span>
+                <span className="language-english-name">{englishName}</span>
+              </div>
+              <span className="language-choice-indicator" aria-hidden="true">
+                {isSelected ? <Check size={13} strokeWidth={3} /> : null}
+              </span>
+            </button>;
+          })}
+          {filteredLanguages.length === 0 && <div className="language-empty-hint">
+            No language matching &ldquo;{languageSearch}&rdquo;
+          </div>}
+        </div>
+        <div className="language-choice-actions">
+          {savedLanguage ? <button type="button" className="subtle-button language-choice-back" onClick={() => { setShowLanguageChoice(false); setLanguageSearch(''); }}><ChevronLeft size={16} />{copy.back || 'Back'}</button> : null}
+          <button className="primary-button auth-submit language-choice-submit" onClick={confirmLanguage} type="button">{copy.continue}<ArrowRight size={18} /></button>
+        </div>
       </div> : <>
         <div className="auth-form-card">
-          <div className="auth-card-topline"><span className="eyebrow">{language === 'kn' ? 'ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ' : language === 'hi' ? 'आपका कृषि सहायक' : 'YOUR FARMING COMPANION'}</span><button className="auth-language-change" type="button" onClick={() => setShowLanguageChoice(true)}><Globe2 size={14} />{copy.changeLanguage}</button></div>
+          <div className="auth-card-topline"><span className="eyebrow">{language === 'kn' ? 'ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ' : language === 'hi' ? 'आपका कृषि सहायक' : language === 'mr' ? 'तुमचा शेती सोबती' : 'YOUR FARMING COMPANION'}</span><button className="auth-language-change" type="button" onClick={() => setShowLanguageChoice(true)}><Globe2 size={14} />{copy.changeLanguage}</button></div>
           <h2>{register ? copy.registerTitle : copy.loginTitle}</h2>
           <p className="muted">{register ? copy.registerDescription : copy.loginDescription}</p>
           {register && <div className="auth-mode-switch"><button type="button" className={mode === 'simple' ? 'auth-mode-active' : ''} onClick={() => { setMode('simple'); setError(''); }}>{copy.visualMode}</button><button type="button" className={mode === 'guided' ? 'auth-mode-active' : ''} onClick={startGuidedSetup}>{copy.voiceMode}</button></div>}
