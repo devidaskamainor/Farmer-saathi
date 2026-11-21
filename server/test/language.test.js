@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFile } from 'node:fs/promises';
 import { getLanguageDefinition, languageConfig, supportedLanguageCodes } from '../src/config/languages.js';
-import { profileUpdates } from '../src/services/farmerProfiles.js';
+import { profileUpdates, updateFarmerProfile, validatePreferredLanguage } from '../src/services/farmerProfiles.js';
 import { askGroq, localizeAssistantText } from '../src/services/groq.js';
 
 test('language catalog includes English and all 22 scheduled Indian languages', () => {
@@ -13,15 +14,50 @@ test('language catalog includes English and all 22 scheduled Indian languages', 
   );
   assert.equal(languageConfig.kn.nativeName, 'ಕನ್ನಡ');
   assert.equal(languageConfig.kn.locale, 'kn-IN');
+  assert.equal(languageConfig.mr.locale, 'mr-IN');
+  assert.equal(languageConfig.mr.sarvamSttLocale, 'mr-IN');
+  assert.equal(languageConfig.mr.sarvamTts.languageCode, 'mr-IN');
   assert.equal(languageConfig.ur.direction, 'rtl');
   assert.equal(getLanguageDefinition('not-supported').englishName, 'English');
   assert.equal(languageConfig.as.interfaceSupport, 'english-fallback');
+});
+
+test('database migration allows exactly every shared language code', async () => {
+  const migration = await readFile(new URL('../../database/migrations/006_preferred_language_codes.sql', import.meta.url), 'utf8');
+  const check = migration.match(/check\s*\(preferred_language\s+in\s*\(([\s\S]*?)\)\)/i);
+  assert.ok(check, 'migration must define the preferred-language check');
+  const migrationCodes = [...check[1].matchAll(/'([a-z]+)'/g)].map(([, code]) => code).sort();
+  assert.deepEqual(migrationCodes, [...supportedLanguageCodes].sort());
 });
 
 test('preferred-language changes map to the existing PostgreSQL profile column', () => {
   assert.deepEqual(profileUpdates({ preferredLanguage: 'ta' }), [
     { column: 'preferred_language', value: 'ta' }
   ]);
+});
+
+test('Marathi is accepted and saved through the profile update service', async () => {
+  const language = validatePreferredLanguage('mr');
+  const db = {
+    async query(sql, values) {
+      assert.match(sql, /update farmers set preferred_language = \$1/);
+      assert.equal(values[0], language);
+      return { rows: [{ id: 'farmer-1', preferred_language: values[0] }] };
+    }
+  };
+  const farmer = await updateFarmerProfile(db, 'farmer-1', profileUpdates({ preferredLanguage: language }));
+  assert.equal(farmer.preferredLanguage, 'mr');
+});
+
+test('unsupported profile languages fail validation before any database update', async () => {
+  let databaseCalled = false;
+  assert.throws(() => validatePreferredLanguage('xx'), {
+    status: 400,
+    message: 'Choose a language from the supported list.'
+  });
+  const db = { async query() { databaseCalled = true; return { rows: [] }; } };
+  assert.equal(databaseCalled, false);
+  assert.equal(validatePreferredLanguage('en'), 'en');
 });
 
 test('AI request names the selected language and retries once when the response uses another script', async () => {
