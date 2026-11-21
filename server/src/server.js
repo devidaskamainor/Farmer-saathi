@@ -1,14 +1,32 @@
 import './config/env.js';
+import { exec } from 'node:child_process';
 import { closeDatabasePool } from './config/database.js';
 import { getVerificationEmailStatus } from './services/email.js';
 import { connectRedis, closeCache } from './services/cache.js';
+
+let browserOpened = false;
+
+function autoOpenBrowser(targetUrl) {
+  if (browserOpened || process.env.NODE_ENV === 'test' || process.env.AUTO_OPEN === 'false' || process.env.CI) {
+    return;
+  }
+  browserOpened = true;
+  const startCmd = process.platform === 'win32'
+    ? `start "" "${targetUrl}"`
+    : process.platform === 'darwin'
+      ? `open "${targetUrl}"`
+      : `xdg-open "${targetUrl}"`;
+  exec(startCmd, () => {});
+}
 
 const { default: app } = await import('./app.js');
 
 const port = Number(process.env.PORT) || 4000;
 const server = app.listen(port, () => {
-  console.info(`Farmer advisory API listening on http://localhost:${port}`);
+  const url = `http://localhost:${port}`;
+  console.info(`Farmer advisory API listening on ${url}`);
   connectRedis().catch(() => {});
+  autoOpenBrowser(url);
   const emailStatus = getVerificationEmailStatus();
   if (emailStatus.configured) {
     console.info(`Email verification SMTP settings are present (port ${emailStatus.port}; ${emailStatus.secure ? 'implicit TLS' : 'STARTTLS required'}).`);

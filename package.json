@@ -12,7 +12,8 @@
     "dev:server": "npm run dev -w server",
     "build": "npm run build -w client",
     "db:config": "npm run db:config -w server",
-    "start": "npm run start -w server"
+    "start": "npm run start -w server",
+    "open": "node -e \"import('node:child_process').then(cp => cp.exec(process.platform === 'win32' ? 'start http://localhost:4000' : 'open http://localhost:4000'))\""
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

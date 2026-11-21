@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      open: true,
       proxy: {
         '/api': {
           target: env.VITE_BACKEND_URL || 'http://localhost:4000',
