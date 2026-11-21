@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import bcrypt from 'bcryptjs';
 import {
-  createPasswordReset, loginAccount, registerAccount, resetPassword, verifyEmail
+  authenticateSocialAccount, createPasswordReset, loginAccount, registerAccount, resetPassword, verifyEmail
 } from '../src/services/auth.js';
 import { hashSessionToken } from '../src/services/authSessions.js';
 
@@ -208,5 +208,50 @@ test('resetPassword validates the bcrypt-compatible password length before datab
   await assert.rejects(resetPassword(pool, 'valid-reset-token', 'a'.repeat(73)), {
     status: 400,
     message: /no more than 72 bytes/
+  });
+});
+
+test('authenticateSocialAccount logs in or registers user via google and facebook', async () => {
+  let createdUser = false;
+  let sessionCreated = false;
+  const client = {
+    async query(sql, values = []) {
+      if (sql.includes('select id, email, email_verified_at from app_users')) return { rows: [] };
+      if (sql.includes('insert into app_users')) {
+        createdUser = true;
+        return { rows: [] };
+      }
+      if (sql.includes('insert into farmers')) return { rows: [farmerRow] };
+      if (sql.includes('insert into auth_sessions')) {
+        sessionCreated = true;
+        return { rows: [] };
+      }
+      return { rows: [] };
+    },
+    release() {}
+  };
+  const pool = { async connect() { return client; } };
+  const result = await authenticateSocialAccount(pool, {
+    provider: 'google',
+    email: 'farmer.google@example.com',
+    name: 'Farmer Google',
+    preferredLanguage: 'kn'
+  });
+
+  assert.equal(createdUser, true);
+  assert.equal(sessionCreated, true);
+  assert.ok(result.token);
+  assert.equal(result.farmer._id, farmerRow.id);
+});
+
+test('authenticateSocialAccount rejects unsupported providers and invalid emails', async () => {
+  const pool = {};
+  await assert.rejects(authenticateSocialAccount(pool, { provider: 'twitter', email: 'test@example.com' }), {
+    status: 400,
+    message: /Supported social providers/
+  });
+  await assert.rejects(authenticateSocialAccount(pool, { provider: 'google', email: 'invalid-email' }), {
+    status: 400,
+    message: /valid email/
   });
 });

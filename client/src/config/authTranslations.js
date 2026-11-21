@@ -14,7 +14,8 @@ export const authCopy = {
     manualHint: 'Tap the microphone to answer by voice, or type below. You can skip details you do not know.', recognitionUnavailable: 'Voice input is not available in this browser. Type your answer instead.', microphoneError: 'Microphone did not start. Allow microphone access in your browser or type your answer.',
     reviewTitle: 'Check your details', reviewQuestion: 'Are these details correct?', notProvided: 'Not provided', changeInfo: 'Change information', confirmInfo: 'Confirm details', credentialsTitle: 'Secure account details', credentialsHint: 'Enter your email and password here. Never speak or share your password in the assistant.',
     accountCreate: 'Create secure account', confirmation: 'Check your email and open the verification link to finish creating your account.', resendVerification: 'Resend verification email',
-    privacy: 'Your details are saved to your private account.', languageWelcome: 'Language selected. I can guide you through creating an account or signing in.'
+    privacy: 'Your details are saved to your private account.', languageWelcome: 'Language selected. I can guide you through creating an account or signing in.',
+    orContinueWith: 'Or continue with', googleSignIn: 'Continue with Google', facebookSignIn: 'Continue with Facebook'
   },
   kn: {
     languageTitle: 'ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ', languageDescription: 'ನಿಮಗೆ ಚೆನ್ನಾಗಿ ಅರ್ಥವಾಗುವ ಭಾಷೆಯನ್ನು ಒತ್ತಿ. ನಂತರ ಬದಲಾಯಿಸಬಹುದು.', continue: 'ಮುಂದುವರಿಸಿ', changeLanguage: 'ಭಾಷೆ ಬದಲಿಸಿ',
@@ -28,7 +29,8 @@ export const authCopy = {
     manualHint: 'ಮೈಕ್ರೊಫೋನ್ ಒತ್ತಿ ಮಾತನಾಡಿ ಅಥವಾ ಕೆಳಗೆ ಟೈಪ್ ಮಾಡಿ. ತಿಳಿಯದ ವಿವರಗಳನ್ನು ಬಿಟ್ಟುಬಿಡಬಹುದು.', recognitionUnavailable: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಬರವಣಿಗೆ ಲಭ್ಯವಿಲ್ಲ. ಉತ್ತರವನ್ನು ಟೈಪ್ ಮಾಡಿ.', microphoneError: 'ಮೈಕ್ರೊಫೋನ್ ಆರಂಭವಾಗಲಿಲ್ಲ. ಬ್ರೌಸರ್ ಅನುಮತಿ ನೀಡಿ ಅಥವಾ ಉತ್ತರ ಟೈಪ್ ಮಾಡಿ.',
     reviewTitle: 'ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ', reviewQuestion: 'ಈ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?', notProvided: 'ನೀಡಿಲ್ಲ', changeInfo: 'ವಿವರ ಬದಲಿಸಿ', confirmInfo: 'ವಿವರ ದೃಢೀಕರಿಸಿ', credentialsTitle: 'ಖಾತೆಯ ಸುರಕ್ಷಿತ ವಿವರಗಳು', credentialsHint: 'ಇಮೇಲ್ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ಅನ್ನು ಇಲ್ಲಿ ನಮೂದಿಸಿ. ಸಹಾಯಕನಿಗೆ ಪಾಸ್‌ವರ್ಡ್ ಹೇಳಬೇಡಿ ಅಥವಾ ಯಾರೊಂದಿಗೂ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.',
     accountCreate: 'ಸುರಕ್ಷಿತ ಖಾತೆ ತೆರೆಯಿರಿ', confirmation: 'ಇಮೇಲ್‌ನಲ್ಲಿರುವ ದೃಢೀಕರಣ ಲಿಂಕ್ ತೆರೆಯುವ ಮೂಲಕ ಖಾತೆ ಪೂರ್ಣಗೊಳಿಸಿ.', resendVerification: 'ದೃಢೀಕರಣ ಇಮೇಲ್ ಮತ್ತೆ ಕಳುಹಿಸಿ',
-    privacy: 'ನಿಮ್ಮ ವಿವರಗಳು ನಿಮ್ಮ ಖಾಸಗಿ ಖಾತೆಯಲ್ಲಿ ಉಳಿಯುತ್ತವೆ.', languageWelcome: 'ಭಾಷೆ ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ. ಖಾತೆ ತೆರೆಯಲು ಅಥವಾ ಲಾಗಿನ್ ಮಾಡಲು ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.'
+    privacy: 'ನಿಮ್ಮ ವಿವರಗಳು ನಿಮ್ಮ ಖಾಸಗಿ ಖಾತೆಯಲ್ಲಿ ಉಳಿಯುತ್ತವೆ.', languageWelcome: 'ಭಾಷೆ ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ. ಖಾತೆ ತೆರೆಯಲು ಅಥವಾ ಲಾಗಿನ್ ಮಾಡಲು ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.',
+    orContinueWith: 'ಅಥವಾ ಇದರೊಂದಿಗೆ ಮುಂದುವರಿಯಿರಿ', googleSignIn: 'Google ಮೂಲಕ ಮುಂದುವರಿಯಿರಿ', facebookSignIn: 'Facebook ಮೂಲಕ ಮುಂದುವರಿಯಿರಿ'
   },
   hi: {
     languageTitle: 'अपनी भाषा चुनें', languageDescription: 'जिस भाषा को आप अच्छी तरह समझते हैं, उसे चुनें। बाद में बदल सकते हैं।', continue: 'आगे बढ़ें', changeLanguage: 'भाषा बदलें',
@@ -42,7 +44,8 @@ export const authCopy = {
     manualHint: 'माइक्रोफ़ोन दबाकर बोलें या नीचे लिखें। जो जानकारी नहीं पता, उसे छोड़ सकते हैं।', recognitionUnavailable: 'इस ब्राउज़र में आवाज़ से लिखना उपलब्ध नहीं है। जवाब टाइप करें।', microphoneError: 'माइक्रोफ़ोन शुरू नहीं हुआ। ब्राउज़र में अनुमति दें या जवाब टाइप करें।',
     reviewTitle: 'अपनी जानकारी जाँचें', reviewQuestion: 'क्या यह जानकारी सही है?', notProvided: 'नहीं दी', changeInfo: 'जानकारी बदलें', confirmInfo: 'जानकारी की पुष्टि करें', credentialsTitle: 'खाते की सुरक्षित जानकारी', credentialsHint: 'ईमेल और पासवर्ड यहाँ लिखें। पासवर्ड सहायक को न बोलें और किसी से साझा न करें।',
     accountCreate: 'सुरक्षित खाता बनाएं', confirmation: 'ईमेल में आया पुष्टि लिंक खोलकर अपना खाता पूरा करें।', resendVerification: 'पुष्टि ईमेल फिर भेजें',
-    privacy: 'आपकी जानकारी आपके निजी खाते में सहेजी जाती है।', languageWelcome: 'भाषा चुनी गई। मैं खाता बनाने या लॉग इन करने में आपकी मदद कर सकता हूँ।'
+    privacy: 'आपकी जानकारी आपके निजी खाते में सहेजी जाती है।', languageWelcome: 'भाषा चुनी गई। मैं खाता बनाने या लॉग इन करने में आपकी मदद कर सकता हूँ।',
+    orContinueWith: 'या इसके साथ जारी रखें', googleSignIn: 'Google के साथ जारी रखें', facebookSignIn: 'Facebook के साथ जारी रखें'
   },
   ta: {
     languageTitle: 'உங்கள் மொழியைத் தேர்வுசெய்க', languageDescription: 'உங்களுக்கு நன்கு தெரிந்த மொழியைத் தேர்ந்தெடுக்கவும். பின்னர் மாற்றலாம்.', continue: 'தொடரவும்', changeLanguage: 'மொழியை மாற்றவும்',
@@ -56,7 +59,8 @@ export const authCopy = {
     manualHint: 'குரல் மூலம் பதிலளிக்க மைக்கை அழுத்தவும், அல்லது கீழே எழுதவும்.', recognitionUnavailable: 'குரல் பதிவு வசதி இல்லை. தட்டச்சு செய்யவும்.', microphoneError: 'மைக் தொடங்கவில்லை. அனுமதியை சரிபார்க்கவும்.',
     reviewTitle: 'விவரங்களை சரிபார்க்கவும்', reviewQuestion: 'இந்த விவரங்கள் சரியானவையா?', notProvided: 'வழங்கப்படவில்லை', changeInfo: 'விவரங்களை மாற்று', confirmInfo: 'விவரங்களை உறுதிசெய்', credentialsTitle: 'பாதுகாப்பான கணக்கு விவரங்கள்', credentialsHint: 'மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.',
     accountCreate: 'கணக்கை உருவாக்கவும்', confirmation: 'மின்னஞ்சலில் உள்ள உறுதிப்படுத்தல் இணைப்பைத் திறக்கவும்.', resendVerification: 'மின்னஞ்சலை மீண்டும் அனுப்பு',
-    privacy: 'உங்கள் விவரங்கள் தனிப்பட்ட கணக்கில் சேமிக்கப்படும்.', languageWelcome: 'மொழி தேர்ந்தெடுக்கப்பட்டது.'
+    privacy: 'உங்கள் விவரங்கள் தனிப்பட்ட கணக்கில் சேமிக்கப்படும்.', languageWelcome: 'மொழி தேர்ந்தெடுக்கப்பட்டது.',
+    orContinueWith: 'அல்லது இதனுடன் தொடரவும்', googleSignIn: 'Google மூலம் தொடரவும்', facebookSignIn: 'Facebook மூலம் தொடரவும்'
   },
   te: {
     languageTitle: 'మీ భాషను ఎంచుకోండి', languageDescription: 'మీకు బాగా అర్థమయ్యే భాషను ఎంచుకోండి. తర్వాత మార్చుకోవచ్చు.', continue: 'కొనసాగించండి', changeLanguage: 'భాష మార్చండి',
@@ -70,7 +74,8 @@ export const authCopy = {
     manualHint: 'వాయిస్ ద్వారా సమాధానం ఇవ్వడానికి మైక్ నొక్కండి లేదా టైప్ చేయండి.', recognitionUnavailable: 'వాయిస్ ఇన్పుట్ అందుబాటులో లేదు. టైప్ చేయండి.', microphoneError: 'మైక్రోఫోన్ ప్రారంభం కాలేదు.',
     reviewTitle: 'మీ వివరాలను తనిఖీ చేయండి', reviewQuestion: 'ఈ వివరాలు సరైనవేనా?', notProvided: 'ఇవ్వలేదు', changeInfo: 'సమాచారం మార్చండి', confirmInfo: 'వివరాలు నిర్ధారించండి', credentialsTitle: 'సురక్షిత ఖాతా వివరాలు', credentialsHint: 'ఇమెయిల్ మరియు పాస్‌వర్డ్ నమోదు చేయండి.',
     accountCreate: 'సురక్షిత ఖాతాను సృష్టించండి', confirmation: 'ఖాతా పూర్తి చేయడానికి ఇమెయిల్‌లోని లింక్‌ను తెరవండి.', resendVerification: 'ధృవీకరణ ఇమెయిల్ మళ్ళీ పంపండి',
-    privacy: 'మీ వివరాలు ప్రైవేట్ ఖాతాలో సురక్షితంగా ఉంటాయి.', languageWelcome: 'భాష ఎంపిక చేయబడింది.'
+    privacy: 'మీ వివరాలు ప్రైవేట్ ఖాతాలో సురక్షితంగా ఉంటాయి.', languageWelcome: 'భాష ఎంపిక చేయబడింది.',
+    orContinueWith: 'లేదా దీనితో కొనసాగించండి', googleSignIn: 'Google తో కొనసాగించండి', facebookSignIn: 'Facebook తో కొనసాగించండి'
   },
   mr: {
     languageTitle: 'आपली भाषा निवडा', languageDescription: 'जी भाषा आपल्याला चांगली समजते ती निवडा. नंतर बदलू शकता.', continue: 'पुढे जा', changeLanguage: 'भाषा बदला',
@@ -84,7 +89,8 @@ export const authCopy = {
     manualHint: 'माइक दाबून बोला किंवा खाली टाईप करा.', recognitionUnavailable: 'या ब्राउझरमध्ये आवाज सुविधा उपलब्ध नाही.', microphoneError: 'मायक्रोफोन सुरू होऊ शकला नाही.',
     reviewTitle: 'माहिती तपासा', reviewQuestion: 'ही माहिती योग्य आहे का?', notProvided: 'दिलेली नाही', changeInfo: 'माहिती बदला', confirmInfo: 'माहिती निश्चित करा', credentialsTitle: 'खात्याची सुरक्षित माहिती', credentialsHint: 'ईमेल आणि पासवर्ड येथे लिहा.',
     accountCreate: 'सुरक्षित खाते तयार करा', confirmation: 'ईमेलवर आलेली लिंक उघडून खाते पडताळणी पूर्ण करा.', resendVerification: 'ईमेल पुन्हा पाठवा',
-    privacy: 'आपली माहिती सुरक्षित राहते.', languageWelcome: 'भाषा निवडली गेली.'
+    privacy: 'आपली माहिती सुरक्षित राहते.', languageWelcome: 'भाषा निवडली गेली.',
+    orContinueWith: 'किंवा यासह पुढे जा', googleSignIn: 'Google सह पुढे जा', facebookSignIn: 'Facebook सह पुढे जा'
   },
   bn: {
     languageTitle: 'আপনার ভাষা নির্বাচন করুন', languageDescription: 'যে ভাষা আপনি সবচেয়ে ভালো বোঝেন সেটি বেছে নিন। পরে পরিবর্তন করা যাবে।', continue: 'এগিয়ে যান', changeLanguage: 'ভাষা পরিবর্তন করুন',
@@ -98,7 +104,8 @@ export const authCopy = {
     manualHint: 'ভয়েসে উত্তর দিতে মাইক টিপুন বা টাইপ করুন।', recognitionUnavailable: 'ভয়েস ইনপুট উপলব্ধ নেই।', microphoneError: 'মাইক্রোফোন চালু হয়নি।',
     reviewTitle: 'তথ্য যাচাই করুন', reviewQuestion: 'তথ্যগুলো কি সঠিক?', notProvided: 'দেওয়া হয়নি', changeInfo: 'তথ্য পরিবর্তন করুন', confirmInfo: 'তথ্য নিশ্চিত করুন', credentialsTitle: 'লগইন তথ্য', credentialsHint: 'ইমেল এবং পাসওয়ার্ড লিখুন।',
     accountCreate: 'অ্যাকাউন্ট নিশ্চিত করুন', confirmation: 'ইমেলে পাঠানো যাচাইকরণ লিঙ্কটি খুলুন।', resendVerification: 'পুনরায় ইমেল পাঠান',
-    privacy: 'আপনার তথ্য সম্পূর্ণ সুরক্ষিত থাকবে।', languageWelcome: 'ভাষা নির্বাচিত হয়েছে।'
+    privacy: 'আপনার তথ্য সম্পূর্ণ সুরক্ষিত থাকবে।', languageWelcome: 'ভাষা নির্বাচিত হয়েছে।',
+    orContinueWith: 'অথবা এর মাধ্যমে এগিয়ে যান', googleSignIn: 'Google দিয়ে এগিয়ে যান', facebookSignIn: 'Facebook দিয়ে এগিয়ে যান'
   },
   gu: {
     languageTitle: 'તમારી ભાષા પસંદ કરો', languageDescription: 'તમને સૌથી વધુ અનુકૂળ ભાષા પસંદ કરો. પછીથી બદલી શકાય છે.', continue: 'આગળ વધો', changeLanguage: 'ભાષા બદલો',
@@ -112,7 +119,8 @@ export const authCopy = {
     manualHint: 'અવાજથી જવાબ આપવા માઇક દબાવો અથવા નીચે લખો.', recognitionUnavailable: 'વૉઇસ ઇનપુટ ઉપલબ્ધ નથી.', microphoneError: 'માઇક્રોફોન શરૂ થયો નથી.',
     reviewTitle: 'વિગતો ચકાસો', reviewQuestion: 'શું આ માહિતી સાચી છે?', notProvided: 'આપેલ નથી', changeInfo: 'વિગતો બદલો', confirmInfo: 'વિગતો કન્ફર્મ કરો', credentialsTitle: 'ખાતાની સુરક્ષિત વિગતો', credentialsHint: 'ઈમેલ અને પાસવર્ડ અહીં દાખલ કરો.',
     accountCreate: 'ખાતું બનાવો', confirmation: 'ઈમેલમાં મોકલેલી લિંક ખોલીને ખાતું સક્રિય કરો.', resendVerification: 'ઈમેલ ફરી મોકલો',
-    privacy: 'તમારી વિગતો ખાનગી ખાતામાં સુરક્ષિત રહે છે.', languageWelcome: 'ભાષા પસંદ કરવામાં આવી છે.'
+    privacy: 'તમારી વિગતો ખાનગી ખાતામાં સુરક્ષિત રહે છે.', languageWelcome: 'ભાષા પસંદ કરવામાં આવી છે.',
+    orContinueWith: 'અથવા આની સાથે આગળ વધો', googleSignIn: 'Google સાથે આગળ વધો', facebookSignIn: 'Facebook સાથે આગળ વધો'
   },
   ml: {
     languageTitle: 'ഭാഷ തിരഞ്ഞെടുക്കുക', languageDescription: 'ഏറ്റവും അനുയോജ്യമായ ഭാഷ തിരഞ്ഞെടുക്കുക. പിന്നീട് മാറ്റാം.', continue: 'തുടരുക', changeLanguage: 'ഭാഷ മാറ്റുക',
@@ -126,7 +134,8 @@ export const authCopy = {
     manualHint: 'സംസാരിക്കാൻ മൈക്ക് അമർത്തുക അല്ലെങ്കിൽ ടൈപ്പ് ചെയ്യുക.', recognitionUnavailable: 'വോയ്‌സ് ഇൻപുട്ട് ലഭ്യമല്ല.', microphoneError: 'മൈക്രോഫോൺ പ്രവർത്തിച്ചില്ല.',
     reviewTitle: 'വിവരങ്ങൾ പരിശോധിക്കുക', reviewQuestion: 'ഈ വിവരങ്ങൾ ശരിയാണോ?', notProvided: 'നൽകിയിട്ടില്ല', changeInfo: 'വിവരങ്ങൾ മാറ്റുക', confirmInfo: 'സ്ഥിരീകരിക്കുക', credentialsTitle: 'സുരക്ഷിത അക്കൗണ്ട് വിവരങ്ങൾ', credentialsHint: 'ഇമെയിലും പാസ്‌വേഡും നൽകുക.',
     accountCreate: 'അക്കൗണ്ട് ഉണ്ടാക്കുക', confirmation: 'ഇമെയിലിലെ സ്ഥിരീകരണ ലിങ്ക് തുറക്കുക.', resendVerification: 'ഇമെയിൽ വീണ്ടും അയക്കുക',
-    privacy: 'നിങ്ങളുടെ വിവരങ്ങൾ സുരക്ഷിതമായിരിക്കും.', languageWelcome: 'ഭാഷ തിരഞ്ഞെടുത്തു.'
+    privacy: 'നിങ്ങളുടെ വിവരങ്ങൾ സുരക്ഷിതമായിരിക്കും.', languageWelcome: 'ഭാഷ തിരഞ്ഞെടുത്തു.',
+    orContinueWith: 'അല്ലെങ്കിൽ ഇതുവഴി തുടരുക', googleSignIn: 'Google വഴി തുടരുക', facebookSignIn: 'Facebook വഴി തുടരുക'
   },
   pa: {
     languageTitle: 'ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ', languageDescription: 'ਜਿਸ ਭਾਸ਼ਾ ਨੂੰ ਤੁਸੀਂ ਚੰਗੀ ਤਰ੍ਹਾਂ ਸਮਝਦੇ ਹੋ ਉਸ ਨੂੰ ਚੁਣੋ। ਬਾਅਦ ਵਿੱਚ ਬਦਲ ਸਕਦੇ ਹੋ।', continue: 'ਅੱਗੇ ਵਧੋ', changeLanguage: 'ਭਾਸ਼ਾ ਬਦਲੋ',
@@ -140,7 +149,8 @@ export const authCopy = {
     manualHint: 'ਬੋਲਣ ਲਈ ਮਾਈਕ ਦਬਾਓ ਜਾਂ ਹੇਠਾਂ ਟਾਈਪ ਕਰੋ।', recognitionUnavailable: 'ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਆਵਾਜ਼ ਸਹੂਲਤ ਨਹੀਂ ਹੈ।', microphoneError: 'ਮਾਈਕ੍ਰੋਫੋਨ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ।',
     reviewTitle: 'ਜਾਣਕਾਰੀ ਦੀ ਜਾਂਚ ਕਰੋ', reviewQuestion: 'ਕੀ ਇਹ ਜਾਣਕਾਰੀ ਸਹੀ ਹੈ?', notProvided: 'ਨਹੀਂ ਦਿੱਤੀ', changeInfo: 'ਜਾਣਕਾਰੀ ਬਦਲੋ', confirmInfo: 'ਜਾਣਕਾਰੀ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ', credentialsTitle: 'ਖਾਤੇ ਦੇ ਸੁਰੱਖਿਅਤ ਵੇਰਵੇ', credentialsHint: 'ਈਮੇਲ ਅਤੇ ਪਾਸਵਰਡ ਦਰਜ ਕਰੋ।',
     accountCreate: 'ਸੁਰੱਖਿਅਤ ਖਾਤਾ ਬਣਾਓ', confirmation: 'ਈਮੇਲ ਵਿੱਚ ਆਏ ਲਿੰਕ ਨੂੰ ਖੋਲ੍ਹ ਕੇ ਖਾਤਾ ਪੂਰਾ ਕਰੋ।', resendVerification: 'ਈਮੇਲ ਮੁੜ ਭੇਜੋ',
-    privacy: 'ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਨਿੱਜੀ ਖਾਤੇ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਰਹੇਗੀ।', languageWelcome: 'ਭਾਸ਼ਾ ਚੁਣ ਲਈ ਗਈ ਹੈ।'
+    privacy: 'ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਨਿੱਜੀ ਖਾਤੇ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਰਹੇਗੀ।', languageWelcome: 'ਭਾਸ਼ਾ ਚੁਣ ਲਈ ਗਈ ਹੈ।',
+    orContinueWith: 'ਜਾਂ ਇਸ ਨਾਲ ਜਾਰੀ ਰੱਖੋ', googleSignIn: 'Google ਨਾਲ ਜਾਰੀ ਰੱਖੋ', facebookSignIn: 'Facebook ਨਾਲ ਜਾਰੀ ਰੱਖੋ'
   },
   or: {
     languageTitle: 'ନିଜ ଭାଷା ବାଛନ୍ତୁ', languageDescription: 'ଯେଉଁ ଭାଷା ଆପଣ ଭଲ ଭାବରେ ବୁଝନ୍ତି ତାହା ବାଛନ୍ତୁ। ପରେ ବଦଳାଇ ପାରିବେ।', continue: 'ଆଗକୁ ବଢ଼ନ୍ତୁ', changeLanguage: 'ଭାଷା ବଦଳାନ୍ତୁ',
@@ -154,7 +164,8 @@ export const authCopy = {
     manualHint: 'କହିବା ପାଇଁ ମାଇକ୍ ଦବାନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ।', recognitionUnavailable: 'ଭଏସ୍ ଇନପୁଟ୍ ଉପଲବ୍ଧ ନାହିଁ।', microphoneError: 'ମାଇକ୍ରୋଫୋନ୍ ଆରମ୍ଭ ହୋଇପାରିଲା ନାହିଁ।',
     reviewTitle: 'ବିବରଣୀ ଯାଞ୍ଚ କରନ୍ତୁ', reviewQuestion: 'ଏହି ବିବରଣୀ ଠିକ୍ ଅଛି କି?', notProvided: 'ଦିଆଯାଇ ନାହିଁ', changeInfo: 'ବିବରଣୀ ବଦଳାନ୍ତୁ', confirmInfo: 'ବିବରଣୀ ନିଶ୍ଚିତ କରନ୍ତୁ', credentialsTitle: 'ସୁରକ୍ଷିତ ଖାତା ତଥ୍ୟ', credentialsHint: 'ଇମେଲ୍ ଏବଂ ପାସୱାର୍ଡ ପ୍ରବେଶ କରନ୍ତୁ।',
     accountCreate: 'ଖାତା ସୃଷ୍ଟି କରନ୍ତୁ', confirmation: 'ଇମେଲ୍ ଯାଞ୍ଚ ଲିଙ୍କ୍ ଖୋଲି ଖାତା ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ।', resendVerification: 'ଇମେଲ୍ ପୁଣି ପଠାନ୍ତୁ',
-    privacy: 'ଆପଣଙ୍କ ତଥ୍ୟ ସୁରକ୍ଷିତ ରହିବ।', languageWelcome: 'ଭାଷା ଚୟନ ହେଲା।'
+    privacy: 'ଆପଣଙ୍କ ତଥ୍ୟ ସୁରକ୍ଷିତ ରହିବ।', languageWelcome: 'ଭାଷା ଚୟନ ହେଲା।',
+    orContinueWith: 'କିମ୍ବା ଏହା ସହିତ ଆଗକୁ ବଢ଼ନ୍ତୁ', googleSignIn: 'Google ସହିତ ଆଗକୁ ବଢ଼ନ୍ତୁ', facebookSignIn: 'Facebook ସହିତ ଆଗକୁ ବଢ଼ନ୍ତୁ'
   },
   as: {
     languageTitle: 'আপোনাৰ ভাষা বাছক', languageDescription: 'যিটো ভাষা আপুনি ভালদৰে বুজি পায় সেয়া বাছক। পিছত সলনি কৰিব পাৰিব।', continue: 'আগবাঢ়ক', changeLanguage: 'ভাষা সলনি কৰক',
@@ -168,7 +179,8 @@ export const authCopy = {
     manualHint: 'কৈ উত্তৰ দিবলৈ মাইক টিপক বা লিখক।', recognitionUnavailable: 'ভইচ ইনপুট উপলব্ধ নহয়।', microphoneError: 'মাইক্ৰ’ফোন আৰম্ভ নহ’ল।',
     reviewTitle: 'তথ্য পৰীক্ষা কৰক', reviewQuestion: 'এই তথ্যসমূহ শুদ্ধনে?', notProvided: 'দিয়া হোৱা নাই', changeInfo: 'তথ্য সলনি কৰক', confirmInfo: 'তথ্য নিশ্চিত কৰক', credentialsTitle: 'সুৰক্ষিত একাউন্টৰ তথ্য', credentialsHint: 'ইমেইল আৰু পাছৱৰ্ড লিখক।',
     accountCreate: 'একাউন্ট খোলক', confirmation: 'ইমেইলত যোৱা লিংক খুলি একাউন্ট নিশ্চিত কৰক।', resendVerification: 'পুনৰ ইমেইল পঠাওক',
-    privacy: 'আপোনাৰ তথ্য গোপনে সুৰক্ষিত থাকিব।', languageWelcome: 'ভাষা নিৰ্বাচন কৰা হ’ল।'
+    privacy: 'আপোনাৰ তথ্য গোপনে সুৰক্ষিত থাকিব।', languageWelcome: 'ভাষা নিৰ্বাচন কৰা হ’ল।',
+    orContinueWith: 'বা ইয়াৰ সৈতে আগবাঢ়ক', googleSignIn: 'Google ৰ সৈতে আগবাঢ়ক', facebookSignIn: 'Facebook ৰ সৈতে আগবাঢ়ক'
   },
   ur: {
     languageTitle: 'اپنی زبان منتخب کریں', languageDescription: 'جس زبان کو آپ بہتر سمجھتے ہیں اسے منتخب کریں۔ بعد میں تبدیل کر سکتے ہیں۔', continue: 'آگے بڑھیں', changeLanguage: 'زبان تبدیل کریں',
@@ -182,7 +194,8 @@ export const authCopy = {
     manualHint: 'بولنے کے لیے مائیک دبائیں یا نیچے لکھیں۔', recognitionUnavailable: 'وائس ان پٹ دستیاب نہیں ہے۔', microphoneError: 'مائیکروفون شروع نہیں ہو سکا۔',
     reviewTitle: 'معلومات چیک کریں', reviewQuestion: 'کیا یہ معلومات درست ہیں؟', notProvided: 'فراہم نہیں کی گئی', changeInfo: 'معلومات تبدیل کریں', confirmInfo: 'معلومات کی تصدیق کریں', credentialsTitle: 'اکاؤنٹ کی تفصیلات', credentialsHint: 'ای میل اور پاس ورڈ درج کریں۔',
     accountCreate: 'محفوظ اکاؤنٹ بنائیں', confirmation: 'ای میل میں توثیقی لنک کھول کر تصدیق کریں۔', resendVerification: 'ای میل دوبارہ بھیجیں',
-    privacy: 'آپ کی معلومات مکمل محفوظ ہیں۔', languageWelcome: 'زبان منتخب کر لی گئی ہے۔'
+    privacy: 'آپ کی معلومات مکمل محفوظ ہیں۔', languageWelcome: 'زبان منتخب کر لی گئی ہے۔',
+    orContinueWith: 'یا اس کے ساتھ جاری رکھیں', googleSignIn: 'Google کے ساتھ جاری رکھیں', facebookSignIn: 'Facebook کے ساتھ جاری رکھیں'
   }
 };
 

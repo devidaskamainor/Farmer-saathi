@@ -4,7 +4,7 @@ import { getDatabasePool } from '../config/database.js';
 import { getClientUrl } from '../config/urls.js';
 import { requireAuth } from '../middleware/auth.js';
 import {
-  createEmailVerification, createPasswordReset, deleteSession, loginAccount,
+  authenticateSocialAccount, createEmailVerification, createPasswordReset, deleteSession, loginAccount,
   registerAccount, resetPassword, validateEmailAddress, verifyEmail
 } from '../services/auth.js';
 import { parseSessionCookie, SESSION_COOKIE_NAME, sessionCookieOptions, SESSION_DURATION_DAYS } from '../services/authSessions.js';
@@ -51,6 +51,20 @@ router.post('/login', async (req, res, next) => {
     const account = await loginAccount(getDatabasePool(), req.body || {});
     setSessionCookie(res, account.token);
     res.json({ farmer: account.farmer });
+  } catch (error) { next(error); }
+});
+
+router.post('/social', async (req, res, next) => {
+  try {
+    const { provider, email, name, preferredLanguage } = req.body || {};
+    const result = await authenticateSocialAccount(getDatabasePool(), {
+      provider,
+      email,
+      name,
+      preferredLanguage
+    });
+    setSessionCookie(res, result.token);
+    res.json({ farmer: result.farmer });
   } catch (error) { next(error); }
 });
 
