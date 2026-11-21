@@ -83,3 +83,38 @@ export function getLanguageDefinition(language) {
 export function isSupportedLanguage(language) {
   return Object.hasOwn(languageConfig, language);
 }
+
+export function cleanSpeechText(text) {
+  return String(text || '')
+    .replace(/^#+\s+/gm, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/^[\s-–*•+]+\s*/gm, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/[`~]/g, '')
+    .replace(/---+|===+/g, '')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function detectSpeechLanguage(text, defaultLang = 'en') {
+  if (!text || typeof text !== 'string') return defaultLang;
+
+  if (/[\u0C80-\u0CFF]/.test(text)) return 'kn'; // Kannada
+  if (/[\u0C00-\u0C7F]/.test(text)) return 'te'; // Telugu
+  if (/[\u0B80-\u0BFF]/.test(text)) return 'ta'; // Tamil
+  if (/[\u0D00-\u0D7F]/.test(text)) return 'ml'; // Malayalam
+  if (/[\u0B00-\u0B7F]/.test(text)) return 'or'; // Odia
+  if (/[\u0A80-\u0AFF]/.test(text)) return 'gu'; // Gujarati
+  if (/[\u0A00-\u0A7F]/.test(text)) return 'pa'; // Punjabi
+  if (/[\u0980-\u09FF]/.test(text)) return defaultLang === 'as' ? 'as' : 'bn'; // Bengali / Assamese
+  if (/[\u0900-\u097F]/.test(text)) return defaultLang === 'mr' ? 'mr' : 'hi'; // Devanagari: Marathi / Hindi
+  if (/[\u0600-\u06FF\u0750-\u08FF]/.test(text)) return defaultLang === 'ks' ? 'ks' : 'ur'; // Arabic script: Kashmiri / Urdu
+
+  return defaultLang;
+}
+

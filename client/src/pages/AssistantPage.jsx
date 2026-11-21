@@ -5,9 +5,9 @@ import {
   Check, Mic, MicOff, LoaderCircle, Send
 } from 'lucide-react';
 import { api, errorMessage } from '../services/api.js';
-import { stopSpeaking } from '../services/voice.js';
+import { speakText, stopSpeaking } from '../services/voice.js';
 import useFarm from '../hooks/useFarm.js';
-import { languageConfig } from '../config/languages.js';
+import { detectSpeechLanguage, languageConfig } from '../config/languages.js';
 import { serviceCopy, assistantCopy } from '../config/translations.js';
 import { supportedLanguages, localizedCopy } from '../services/languageStorage.js';
 import PageTitle from '../components/common/PageTitle.jsx';
@@ -39,8 +39,6 @@ export default function AssistantPage() {
   const recordingTimerRef = useRef(null);
   const transcriptionAbortRef = useRef(null);
   const speechAbortRef = useRef(null);
-  const audioRef = useRef(null);
-  const audioCacheRef = useRef(new Map());
   const playbackRequestRef = useRef(0);
   const mountedRef = useRef(true);
 
@@ -55,8 +53,6 @@ export default function AssistantPage() {
       chunksRef.current = [];
       releaseMicrophone();
       stopAudio(false);
-      for (const url of audioCacheRef.current.values()) URL.revokeObjectURL(url);
-      audioCacheRef.current.clear();
       stopSpeaking();
     };
   }, []);
@@ -80,58 +76,31 @@ export default function AssistantPage() {
   }
 
   async function speak(text) {
+    if (!text) return;
     setSpeechError('');
-    const voice = languageConfig[language]?.sarvamTts;
-    if (!voice) {
-      setSpeechError(copy.speechUnavailable);
-      return;
-    }
-    if (!text || text.length > 2500) {
-      setSpeechError(copy.speechTooLong);
-      return;
-    }
+    stopAudio(false);
+    const requestId = ++playbackRequestRef.current;
+    if (mountedRef.current) setPlayingAudio(true);
 
-    stopAudio();
-    const requestId = playbackRequestRef.current;
-    const cacheKey = `${language}:${text}`;
-    let url = audioCacheRef.current.get(cacheKey);
     try {
-      if (!url) {
-        const controller = new AbortController();
-        speechAbortRef.current = controller;
-        const response = await api.post('/voice/speak', { text, language }, {
-          responseType: 'blob',
-          timeout: 45000,
-          signal: controller.signal
-        });
-        if (!response.data?.size) throw new Error('Empty audio response');
-        url = URL.createObjectURL(response.data);
-        audioCacheRef.current.set(cacheKey, url);
-        while (audioCacheRef.current.size > 3) {
-          const oldestKey = audioCacheRef.current.keys().next().value;
-          URL.revokeObjectURL(audioCacheRef.current.get(oldestKey));
-          audioCacheRef.current.delete(oldestKey);
-        }
-      }
-      if (!mountedRef.current || requestId !== playbackRequestRef.current) return;
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => {
-        if (audioRef.current === audio) audioRef.current = null;
-        if (mountedRef.current) setPlayingAudio(false);
-      };
-      audio.onerror = () => {
-        if (audioRef.current === audio) audioRef.current = null;
-        if (mountedRef.current) {
-          setPlayingAudio(false);
+      const targetLang = detectSpeechLanguage(text, language);
+      const res = await speakText(text, targetLang);
+      if (requestId !== playbackRequestRef.current || !mountedRef.current) return;
+
+      if (!res.ok) {
+        if (res.reason === 'unsupported' || res.reason === 'voice-unavailable') {
+          setSpeechError(copy.speechUnavailable);
+        } else if (res.reason !== 'cancelled') {
           setSpeechError(copy.speechError);
         }
-      };
-      await audio.play();
-      if (mountedRef.current) setPlayingAudio(true);
-    } catch (playbackError) {
-      if (playbackError?.name !== 'CanceledError' && playbackError?.name !== 'AbortError' && mountedRef.current) {
-        setSpeechError(playbackError?.response ? errorMessage(playbackError) : copy.speechError);
+      }
+    } catch {
+      if (mountedRef.current && requestId === playbackRequestRef.current) {
+        setSpeechError(copy.speechError);
+      }
+    } finally {
+      if (mountedRef.current && requestId === playbackRequestRef.current) {
+        setPlayingAudio(false);
       }
     }
   }
@@ -140,11 +109,7 @@ export default function AssistantPage() {
     playbackRequestRef.current += 1;
     speechAbortRef.current?.abort();
     speechAbortRef.current = null;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
+    stopSpeaking();
     if (updateState && mountedRef.current) setPlayingAudio(false);
   }
 
@@ -331,10 +296,10 @@ export default function AssistantPage() {
         <button type="button" onClick={startNewConversation}><Plus size={16} />{copy.newConversation}</button>
         <button type="button" onClick={() => navigate('/dashboard')}><House size={16} />{copy.home}</button>
       </div>
-      <div className="message-list">{messages.map((message, i) => <div key={i} className={`message-row ${message.role === 'user' ? 'message-user' : ''}`}><div className="message-avatar">{message.role === 'assistant' ? <Leaf size={14} /> : <UserRound size={14} />}</div><div className="message-content"><div className={`message-bubble ${message.role === 'user' ? 'bubble-user' : ''}`}>{message.answer}</div>{message.role === 'assistant' && <button className="speak-button" type="button" onClick={() => speak(message.answer)}><Volume2 size={14} />{copy.listen}</button>}</div></div>)}{loading && <div className="typing-indicator"><span /><span /><span /> Saathi is thinking…</div>}</div>
+      <div className="message-list">{messages.map((message, i) => <div key={i} className={`message-row ${message.role === 'user' ? 'message-user' : ''}`}><div className="message-avatar">{message.role === 'assistant' ? <Leaf size={14} /> : <UserRound size={14} />}</div><div className="message-content"><div className={`message-bubble ${message.role === 'user' ? 'bubble-user' : ''}`}>{message.answer}</div>{message.role === 'assistant' && <button className={`speak-button ${playingAudio ? 'speaking' : ''}`} type="button" onClick={() => playingAudio ? stopAudio() : speak(message.answer)} aria-label={playingAudio ? copy.stopSpeaking : copy.listen}>{playingAudio ? <VolumeX size={14} /> : <Volume2 size={14} />}{playingAudio ? copy.stopSpeaking : copy.listen}</button>}</div></div>)}{loading && <div className="typing-indicator"><span /><span /><span /> Saathi is thinking…</div>}</div>
       {locationToConfirm && <div className="location-confirm"><button className="primary-button" type="button" onClick={confirmLocation}><Check size={17} />{copy.confirm}</button><button className="subtle-button" type="button" onClick={cancelLocation}>{copy.change}</button></div>}
       {error && <div className="chat-error"><ErrorNotice>{error}</ErrorNotice></div>}
-      {(speechError || (!languageConfig[language]?.sarvamTts && !speechError)) && <p className="chat-speech-notice" role="status">{speechError || copy.speechUnavailable}</p>}
+      {speechError && <p className="chat-speech-notice" role="status">{speechError}</p>}
       <form className="chat-composer" onSubmit={send}>
         <button className={`mic-button ${listening ? 'mic-listening' : ''}`} type="button" onClick={listening ? stopListening : startListening} disabled={loading || transcribing} aria-label={listening ? copy.stopListening : transcribing ? copy.transcribing : copy.microphone}>{listening ? <MicOff size={18} /> : transcribing ? <LoaderCircle className="spin" size={18} /> : <Mic size={18} />}</button>
         <input value={input} onChange={e => setInput(e.target.value)} placeholder={copy.composer} aria-label={copy.composer} />

@@ -1,4 +1,4 @@
-import { languageConfig } from '../config/languages.js';
+import { cleanSpeechText, detectSpeechLanguage, languageConfig } from '../config/languages.js';
 import { api } from './api.js';
 
 let speechRequestId = 0;
@@ -73,22 +73,23 @@ export function stopSpeaking() {
 }
 
 export async function speakText(text, language) {
-  const cleanText = String(text || '').trim();
+  const cleanText = cleanSpeechText(text);
   if (!cleanText) return { ok: false, reason: 'empty' };
 
   stopSpeaking();
   const requestId = ++speechRequestId;
+  const targetLanguage = detectSpeechLanguage(cleanText, language);
 
   // 1. First prioritize Sarvam AI server TTS for natural Indic speech (Kannada, Hindi, etc.)
-  const langDef = languageConfig[language];
+  const langDef = languageConfig[targetLanguage] || languageConfig[language];
   if (langDef?.sarvamTts) {
     try {
       const response = await api.post('/voice/speak', {
-        text: cleanText.slice(0, 2500),
-        language
+        text: cleanText,
+        language: targetLanguage
       }, {
         responseType: 'blob',
-        timeout: 25000
+        timeout: 45000
       });
 
       if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
@@ -124,15 +125,22 @@ export async function speakText(text, language) {
   }
 
   const synth = window.speechSynthesis;
-  const voice = await waitForVoice(language);
+  const voice = await waitForVoice(targetLanguage);
   if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
-  if (!voice) return { ok: false, reason: 'voice-unavailable' };
 
   const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = speechLocale(language);
-  utterance.voice = voice;
+  utterance.lang = speechLocale(targetLanguage);
+  if (voice) utterance.voice = voice;
+
   try {
-    synth.speak(utterance);
+    await new Promise((resolve, reject) => {
+      utterance.onend = () => resolve();
+      utterance.onerror = e => {
+        if (e.error === 'canceled' || e.error === 'interrupted') resolve();
+        else reject(e);
+      };
+      synth.speak(utterance);
+    });
     return { ok: true, source: 'browser' };
   } catch {
     return { ok: false, reason: 'playback-failed' };

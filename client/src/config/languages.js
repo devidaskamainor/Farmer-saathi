@@ -1,4 +1,6 @@
 export {
+  cleanSpeechText,
+  detectSpeechLanguage,
   getLanguageDefinition,
   isSupportedLanguage,
   languageConfig,

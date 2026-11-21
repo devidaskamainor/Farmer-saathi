@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { requireAuth } from '../middleware/auth.js';
 import { synthesizeSpeech, transcribeAudio } from '../services/sarvam.js';
-import { getLanguageDefinition } from '../config/languages.js';
+import { cleanSpeechText, detectSpeechLanguage, getLanguageDefinition } from '../config/languages.js';
 import { HttpError } from '../utils/http.js';
 
 const router = Router();
@@ -46,9 +46,14 @@ router.post('/transcribe', requireAuth, (req, res, next) => uploadAudio.single('
 
 router.post('/speak', requireAuth, async (req, res, next) => {
   try {
-    const text = String(req.body?.text || '').trim();
-    if (!text || text.length > 2500) throw new HttpError(400, 'Enter text of up to 2,500 characters for spoken playback.');
-    const targetLang = req.body?.language || req.farmer.preferredLanguage || 'en';
+    const raw = String(req.body?.text || '').trim();
+    if (!raw) throw new HttpError(400, 'Enter text for spoken playback.');
+    const text = cleanSpeechText(raw);
+    if (!text) throw new HttpError(400, 'Enter text for spoken playback.');
+    if (text.length > 10000) throw new HttpError(400, 'Enter text of up to 10,000 characters for spoken playback.');
+
+    const requestedLang = req.body?.language || req.farmer?.preferredLanguage || 'en';
+    const targetLang = detectSpeechLanguage(text, requestedLang);
     const voice = getLanguageDefinition(targetLang).sarvamTts;
     if (!voice) throw new HttpError(422, 'Spoken playback is not available in this language. The answer is still available as text.');
     const audio = await synthesizeSpeech(text, voice);

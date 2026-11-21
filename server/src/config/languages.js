@@ -1,4 +1,6 @@
 import {
+  cleanSpeechText,
+  detectSpeechLanguage,
   getLanguageDefinition,
   isSupportedLanguage,
   languageConfig,
@@ -6,6 +8,8 @@ import {
 } from '../../../shared/languages.js';
 
 export {
+  cleanSpeechText,
+  detectSpeechLanguage,
   getLanguageDefinition,
   isSupportedLanguage,
   languageConfig,
