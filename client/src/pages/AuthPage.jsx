@@ -178,9 +178,10 @@ export default function AuthPage({ onAuthenticated }) {
   function handleSocialAuth(provider) {
     setError('');
     setNotice('');
-    if (provider === 'google' && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-      const redirectUri = `${window.location.origin}/dashboard`;
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(import.meta.env.VITE_GOOGLE_CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
+    if (provider === 'google') {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167718491134-5s46f4ar8q5nii2552nmf8sj0subd5v2.apps.googleusercontent.com';
+      const redirectUri = window.location.origin;
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
       window.location.href = googleAuthUrl;
       return;
     }
