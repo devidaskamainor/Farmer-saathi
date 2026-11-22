@@ -1488,6 +1488,48 @@ td small { display: block; margin-top: 3px; color: #9aa39b; font-size: 9px; }
   border-radius: 10px;
 }
 
+.weather-voice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--paper-alt, #f8fafc);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 10px;
+}
+
+.advisory-voice-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--line, #cbd5e1);
+  background: var(--paper, #ffffff);
+  color: var(--ink-soft, #64748b);
+  cursor: pointer;
+  transition: all 0.16s ease;
+  flex-shrink: 0;
+}
+
+.advisory-voice-btn:hover {
+  background: var(--green-soft, #eefbf1);
+  color: var(--green, #16a34a);
+  border-color: var(--green, #16a34a);
+}
+
+.advisory-voice-btn.active {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #dc2626;
+  animation: pulse-ring 1.5s infinite;
+}
+
 .row-voice-btn {
   display: inline-flex;
   align-items: center;
