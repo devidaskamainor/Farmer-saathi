@@ -41,6 +41,7 @@ export default function AuthPage({ onAuthenticated }) {
   const recognitionRef = useRef(null);
   const googleButtonRef = useRef(null);
   const [gisReady, setGisReady] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState(import.meta.env.VITE_GOOGLE_CLIENT_ID || '');
   const copy = localizedCopy(authCopy, language);
   const questions = localizedCopy(registrationQuestions, language);
   const currentQuestion = questions[stepIndex];
@@ -49,6 +50,16 @@ export default function AuthPage({ onAuthenticated }) {
     recognitionRef.current?.abort();
     stopSpeaking();
   }, []);
+
+  useEffect(() => {
+    if (!googleClientId) {
+      api.get('/auth/config')
+        .then(({ data }) => {
+          if (data?.googleClientId) setGoogleClientId(data.googleClientId);
+        })
+        .catch(() => {});
+    }
+  }, [googleClientId]);
 
   async function handleGoogleCredentialResponse(response) {
     if (!response?.credential) {
@@ -72,8 +83,8 @@ export default function AuthPage({ onAuthenticated }) {
   }
 
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
+    const activeClientId = googleClientId || import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!activeClientId) return;
 
     let mounted = true;
 
@@ -81,15 +92,18 @@ export default function AuthPage({ onAuthenticated }) {
       if (!mounted || !window.google?.accounts?.id || !googleButtonRef.current) return;
       try {
         window.google.accounts.id.initialize({
-          client_id: clientId,
+          client_id: activeClientId,
           callback: handleGoogleCredentialResponse,
           auto_select: false,
-          cancel_on_tap_outside: true
+          cancel_on_tap_outside: true,
+          context: 'signin',
+          ux_mode: 'popup',
+          itp_support: true
         });
         window.google.accounts.id.renderButton(googleButtonRef.current, {
           theme: 'outline',
           size: 'large',
-          width: 260,
+          width: 280,
           text: 'continue_with',
           shape: 'rectangular',
           logo_alignment: 'left'
@@ -115,7 +129,7 @@ export default function AuthPage({ onAuthenticated }) {
       };
     }
     return () => { mounted = false; };
-  }, [language, register, mode, showLanguageChoice]);
+  }, [googleClientId, language, register, mode, showLanguageChoice]);
 
   function updateLanguage(nextLanguage) {
     setLanguage(nextLanguage);
@@ -249,29 +263,23 @@ export default function AuthPage({ onAuthenticated }) {
     setNotice('');
 
     if (provider === 'google') {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      const activeClientId = googleClientId || import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-      if (!clientId) {
-        setError('Google sign-in is not configured. Please try again later.');
+      if (!activeClientId) {
+        setError('Google sign-in is not configured. Set GOOGLE_CLIENT_ID or VITE_GOOGLE_CLIENT_ID in your environment.');
         return;
       }
 
       if (window.google?.accounts?.id) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true
-        });
+        const renderedBtn = googleButtonRef.current?.querySelector('div[role="button"]');
+        if (renderedBtn) {
+          renderedBtn.click();
+          return;
+        }
 
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            const renderedBtn = googleButtonRef.current?.querySelector('div[role="button"]');
-            if (renderedBtn) {
-              renderedBtn.click();
-            } else {
-              setError('Please click the Google button directly to complete sign-in.');
-            }
+            setError('Google Sign-In prompt was skipped or blocked by browser settings. Please try again.');
           }
         });
         return;
@@ -431,8 +439,8 @@ export default function AuthPage({ onAuthenticated }) {
               <span>{copy.orContinueWith || 'Or continue with'}</span>
             </div>
             <div className="auth-social-buttons">
-              <div className="google-sign-in-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div ref={googleButtonRef} style={{ display: gisReady ? 'block' : 'none', minHeight: '40px' }} />
+              <div className="google-sign-in-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', minHeight: '44px' }}>
+                <div ref={googleButtonRef} style={{ minHeight: '40px', display: gisReady ? 'flex' : 'none', justifyContent: 'center', width: '100%' }} />
                 {!gisReady && (
                   <button
                     type="button"

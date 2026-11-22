@@ -32,6 +32,12 @@ const passwordResetCompleteLimit = rateLimit({
   message: { message: 'Too many password reset attempts. Please try again later.' }
 });
 
+router.get('/config', (_req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || ''
+  });
+});
+
 router.post('/register', async (req, res, next) => {
   try {
     const body = req.body || {};

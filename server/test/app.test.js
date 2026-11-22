@@ -263,3 +263,17 @@ test('Content-Security-Policy header includes Google Identity Services directive
   assert.ok(csp.includes('https://accounts.google.com/gsi/'), 'CSP must allow GSI connect/frame');
 });
 
+test('Cross-Origin-Opener-Policy header is configured to same-origin-allow-popups for Google Sign-In', async () => {
+  const response = await fetch(`${baseUrl}/api/health`);
+  const coop = response.headers.get('cross-origin-opener-policy');
+  assert.equal(coop, 'same-origin-allow-popups', 'COOP must be same-origin-allow-popups to allow Google popup communication');
+});
+
+test('GET /api/auth/config returns the configured Google Client ID for client bootstrap', async () => {
+  process.env.GOOGLE_CLIENT_ID = 'test-client-id-for-config.apps.googleusercontent.com';
+  const response = await fetch(`${baseUrl}/api/auth/config`);
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.googleClientId, 'test-client-id-for-config.apps.googleusercontent.com');
+});
+
