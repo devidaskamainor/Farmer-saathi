@@ -1502,6 +1502,38 @@ td small { display: block; margin-top: 3px; color: #9aa39b; font-size: 9px; }
   border-radius: 10px;
 }
 
+.scheme-voice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 14px 0 16px;
+  padding: 10px 14px;
+  background: var(--paper-alt, #f8fafc);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 10px;
+}
+
+.scheme-voice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.scheme-voice-btn.active {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+  animation: pulse-ring 1.5s infinite;
+}
+
 .advisory-voice-btn {
   display: inline-flex;
   align-items: center;
