@@ -4,6 +4,18 @@ import { api } from './api.js';
 let speechRequestId = 0;
 let activeAudioElement = null;
 let activeAudioUrl = null;
+let globalAudioCtx = null;
+let currentSourceNode = null;
+
+function getAudioContext() {
+  if (typeof window === 'undefined') return null;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
+    globalAudioCtx = new AudioContextClass();
+  }
+  return globalAudioCtx;
+}
 
 export function speechLocale(language) {
   return languageConfig[language]?.locale || languageConfig.en.locale;
@@ -50,12 +62,21 @@ function waitForVoice(language) {
       resolve(voice);
     };
     synth.addEventListener?.('voiceschanged', onVoicesChanged);
-    timeoutId = window.setTimeout(() => finish(findVoice(language)), 1200);
+    timeoutId = window.setTimeout(() => finish(findVoice(language)), 800);
   });
 }
 
 export function stopSpeaking() {
   speechRequestId += 1;
+
+  if (currentSourceNode) {
+    try {
+      currentSourceNode.stop();
+      currentSourceNode.disconnect();
+    } catch {}
+    currentSourceNode = null;
+  }
+
   if (activeAudioElement) {
     try {
       activeAudioElement.pause();
@@ -63,10 +84,12 @@ export function stopSpeaking() {
     } catch {}
     activeAudioElement = null;
   }
+
   if (activeAudioUrl) {
     try { URL.revokeObjectURL(activeAudioUrl); } catch {}
     activeAudioUrl = null;
   }
+
   if (typeof window !== 'undefined' && window.speechSynthesis) {
     try { window.speechSynthesis.cancel(); } catch {}
   }
@@ -80,6 +103,12 @@ export async function speakText(text, language) {
   const requestId = ++speechRequestId;
   const targetLanguage = detectSpeechLanguage(cleanText, language);
 
+  // Eagerly unlock AudioContext during the user's click gesture
+  const audioCtx = getAudioContext();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    try { await audioCtx.resume(); } catch {}
+  }
+
   // 1. First prioritize Sarvam AI server TTS for natural Indic speech (Kannada, Hindi, etc.)
   const langDef = languageConfig[targetLanguage] || languageConfig[language];
   if (langDef?.sarvamTts) {
@@ -88,14 +117,45 @@ export async function speakText(text, language) {
         text: cleanText,
         language: targetLanguage
       }, {
-        responseType: 'blob',
+        responseType: 'arraybuffer',
         timeout: 45000
       });
 
       if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
 
-      if (response.data && response.data.size > 0) {
-        const audioUrl = URL.createObjectURL(response.data);
+      const arrayBuffer = response.data;
+      if (arrayBuffer && arrayBuffer.byteLength > 44) {
+        // High fidelity playback via AudioContext
+        if (audioCtx && typeof audioCtx.decodeAudioData === 'function') {
+          try {
+            if (audioCtx.state === 'suspended') {
+              await audioCtx.resume();
+            }
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+            if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioCtx.destination);
+            currentSourceNode = source;
+
+            await new Promise((resolve, reject) => {
+              source.onended = () => {
+                if (currentSourceNode === source) currentSourceNode = null;
+                resolve();
+              };
+              try { source.start(0); } catch (startErr) { reject(startErr); }
+            });
+
+            return { ok: true, source: 'sarvam' };
+          } catch (ctxErr) {
+            console.warn('AudioContext playback fallback to HTML5 Audio:', ctxErr?.message);
+          }
+        }
+
+        // HTML5 Audio fallback for WAV buffer
+        const wavBlob = new Blob([arrayBuffer], { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(wavBlob);
         activeAudioUrl = audioUrl;
         const audio = new Audio(audioUrl);
         activeAudioElement = audio;
@@ -119,7 +179,7 @@ export async function speakText(text, language) {
     }
   }
 
-  // 2. Fall back to local browser window.speechSynthesis if supported and available
+  // 2. Fall back to local browser window.speechSynthesis
   if (typeof window === 'undefined' || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') {
     return { ok: false, reason: 'unsupported' };
   }
@@ -133,6 +193,7 @@ export async function speakText(text, language) {
   if (voice) utterance.voice = voice;
 
   try {
+    synth.cancel();
     await new Promise((resolve, reject) => {
       utterance.onend = () => resolve();
       utterance.onerror = e => {
