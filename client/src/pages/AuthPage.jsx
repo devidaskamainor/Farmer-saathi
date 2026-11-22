@@ -176,17 +176,38 @@ export default function AuthPage({ onAuthenticated }) {
   }
 
   function handleSocialAuth(provider) {
-    setError('');
-    setNotice('');
-    if (provider === 'google') {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '167718491134-5s46f4ar8q5nii2552nmf8sj0subd5v2.apps.googleusercontent.com';
-      const redirectUri = window.location.origin;
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
-      window.location.href = googleAuthUrl;
+  setError('');
+  setNotice('');
+
+  if (provider === 'google') {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (!clientId) {
+      setError('Google sign-in is not configured. Please try again later.');
       return;
     }
-    setSocialModal(provider);
+
+    const redirectUri = window.location.origin;
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: 'token',
+      scope: 'openid email profile',
+      prompt: 'select_account',
+    });
+
+    console.log('Google OAuth redirect URI:', redirectUri);
+
+    window.location.assign(
+      `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+    );
+
+    return;
   }
+
+  setSocialModal(provider);
+}
 
   async function handleSelectSocialAccount(account) {
     const provider = socialModal || 'google';
