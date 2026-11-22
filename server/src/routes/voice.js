@@ -54,10 +54,12 @@ router.post('/speak', requireAuth, async (req, res, next) => {
 
     const requestedLang = req.body?.language || req.farmer?.preferredLanguage || 'en';
     const targetLang = detectSpeechLanguage(text, requestedLang);
-    const voice = getLanguageDefinition(targetLang).sarvamTts;
-    if (!voice) throw new HttpError(422, 'Spoken playback is not available in this language. The answer is still available as text.');
+    const langDef = getLanguageDefinition(targetLang);
+    const voice = langDef.sarvamTts || { languageCode: targetLang, model: 'bulbul:v4-flash', speaker: 'default' };
     const audio = await synthesizeSpeech(text, voice);
-    res.set('Cache-Control', 'no-store').type('audio/wav').send(audio);
+    const isWav = audio.length >= 4 && audio.subarray(0, 4).toString() === 'RIFF';
+    const contentType = isWav ? 'audio/wav' : 'audio/mpeg';
+    res.set('Cache-Control', 'no-store').type(contentType).send(audio);
   } catch (error) { next(error); }
 });
 

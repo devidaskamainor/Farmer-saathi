@@ -124,21 +124,65 @@ async function synthesizeSingleChunk(chunkText, voice, apiKey) {
   return audio;
 }
 
-export async function synthesizeSpeech(text, voice) {
-  const apiKey = getApiKey();
-  const chunks = splitTextIntoSpeechChunks(text, 1500);
+export async function synthesizeWithIndicFallback(text, langCode = 'kn') {
+  const shortLang = String(langCode || 'kn').split('-')[0].toLowerCase();
+  const chunks = splitTextIntoSpeechChunks(text, 180);
+  const audioBuffers = [];
 
-  if (chunks.length <= 1) {
-    return synthesizeSingleChunk(chunks[0] || text, voice, apiKey);
-  }
-
-  // Synthesize chunks sequentially to prevent concurrency rate limits on Sarvam API
-  const buffers = [];
   for (const chunk of chunks) {
-    const audio = await synthesizeSingleChunk(chunk, voice, apiKey);
-    buffers.push(audio);
+    if (!chunk.trim()) continue;
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk)}&tl=${encodeURIComponent(shortLang)}&client=tw-ob`;
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        signal: AbortSignal.timeout(12000)
+      });
+      if (res.ok) {
+        const arrayBuf = await res.arrayBuffer();
+        if (arrayBuf.byteLength > 0) {
+          audioBuffers.push(Buffer.from(arrayBuf));
+        }
+      }
+    } catch (err) {
+      console.warn('Indic TTS fallback chunk failed:', err.message);
+    }
   }
-  return concatenateWavBuffers(buffers);
+
+  if (audioBuffers.length > 0) {
+    return Buffer.concat(audioBuffers);
+  }
+  return null;
+}
+
+export async function synthesizeSpeech(text, voice) {
+  let apiKey;
+  try {
+    apiKey = getApiKey();
+  } catch (keyErr) {
+    const fallback = await synthesizeWithIndicFallback(text, voice?.languageCode || 'kn');
+    if (fallback) return fallback;
+    throw keyErr;
+  }
+
+  try {
+    const chunks = splitTextIntoSpeechChunks(text, 1500);
+    if (chunks.length <= 1) {
+      return await synthesizeSingleChunk(chunks[0] || text, voice, apiKey);
+    }
+
+    // Synthesize chunks sequentially to prevent concurrency rate limits on Sarvam API
+    const buffers = [];
+    for (const chunk of chunks) {
+      const audio = await synthesizeSingleChunk(chunk, voice, apiKey);
+      buffers.push(audio);
+    }
+    return concatenateWavBuffers(buffers);
+  } catch (sarvamErr) {
+    console.warn('Sarvam TTS unavailable, falling back to resilient Indic voice synthesis:', sarvamErr.message);
+    const fallback = await synthesizeWithIndicFallback(text, voice?.languageCode || 'kn');
+    if (fallback) return fallback;
+    throw sarvamErr;
+  }
 }
 
 function getApiKey() {

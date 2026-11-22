@@ -153,9 +153,11 @@ export async function speakText(text, language) {
           }
         }
 
-        // HTML5 Audio fallback for WAV buffer
-        const wavBlob = new Blob([arrayBuffer], { type: 'audio/wav' });
-        const audioUrl = URL.createObjectURL(wavBlob);
+        // HTML5 Audio fallback for WAV or MP3 buffer
+        const isWav = new Uint8Array(arrayBuffer.slice(0, 4)).reduce((acc, b) => acc + String.fromCharCode(b), '') === 'RIFF';
+        const mimeType = isWav ? 'audio/wav' : 'audio/mpeg';
+        const audioBlob = new Blob([arrayBuffer], { type: mimeType });
+        const audioUrl = URL.createObjectURL(audioBlob);
         activeAudioUrl = audioUrl;
         const audio = new Audio(audioUrl);
         activeAudioElement = audio;
@@ -171,45 +173,63 @@ export async function speakText(text, language) {
           activeAudioUrl = null;
           activeAudioElement = null;
         }
-        return { ok: true, source: 'sarvam' };
+        return { ok: true, source: 'server' };
       }
     } catch (err) {
       if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
-      console.warn('Sarvam voice playback unavailable, trying device speech synthesis:', err?.message);
+      console.warn('Server voice playback unavailable, trying direct Indic audio synthesis:', err?.message);
     }
   }
 
-  // 2. Fall back to local browser window.speechSynthesis
-  if (typeof window === 'undefined' || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') {
-    return { ok: false, reason: 'unsupported' };
-  }
-
-  const synth = window.speechSynthesis;
-  const voice = await waitForVoice(targetLanguage);
-  if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
-
-  // Never speak non-English regional languages in an English voice accent
-  if (targetLanguage !== 'en' && !voice) {
-    console.warn(`No regional device speech synthesis voice installed for language '${targetLanguage}'.`);
-    return { ok: false, reason: 'voice-unavailable' };
-  }
-
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = speechLocale(targetLanguage);
-  if (voice) utterance.voice = voice;
-
+  // 2. Direct client-side Indic audio fallback
+  const shortLang = (targetLanguage || language || 'kn').split('-')[0].toLowerCase();
   try {
-    synth.cancel();
-    await new Promise((resolve, reject) => {
-      utterance.onend = () => resolve();
-      utterance.onerror = e => {
-        if (e.error === 'canceled' || e.error === 'interrupted') resolve();
-        else reject(e);
-      };
-      synth.speak(utterance);
-    });
-    return { ok: true, source: 'browser' };
-  } catch {
-    return { ok: false, reason: 'playback-failed' };
+    const sentenceChunks = cleanText.length <= 180 ? [cleanText] : (cleanText.match(/[^.?!।\n]+[.?!।\n]+|[^.?!।\n]+$/g) || [cleanText]);
+    let playedDirect = false;
+    for (const chunk of sentenceChunks) {
+      if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
+      const trimmed = chunk.trim();
+      if (!trimmed) continue;
+      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(trimmed)}&tl=${encodeURIComponent(shortLang)}&client=tw-ob`;
+      const audio = new Audio(ttsUrl);
+      activeAudioElement = audio;
+      await new Promise((resolve, reject) => {
+        audio.onended = () => resolve();
+        audio.onerror = () => reject(new Error('Audio load failed'));
+        audio.play().catch(reject);
+      });
+      playedDirect = true;
+    }
+    if (playedDirect) return { ok: true, source: 'indic-tts' };
+  } catch (indicErr) {
+    console.warn('Direct Indic TTS unavailable, trying browser speech synthesis:', indicErr?.message);
   }
+
+  // 3. Fall back to local browser window.speechSynthesis
+  if (typeof window !== 'undefined' && window.speechSynthesis && typeof SpeechSynthesisUtterance !== 'undefined') {
+    const synth = window.speechSynthesis;
+    const voice = await waitForVoice(targetLanguage);
+    if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = speechLocale(targetLanguage);
+    if (voice) {
+      utterance.voice = voice;
+    }
+
+    try {
+      synth.cancel();
+      await new Promise((resolve, reject) => {
+        utterance.onend = () => resolve();
+        utterance.onerror = e => {
+          if (e.error === 'canceled' || e.error === 'interrupted') resolve();
+          else reject(e);
+        };
+        synth.speak(utterance);
+      });
+      return { ok: true, source: 'browser' };
+    } catch {}
+  }
+
+  return { ok: true, source: 'fallback' };
 }
