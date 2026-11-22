@@ -220,7 +220,7 @@ export default function AuthPage({ onAuthenticated }) {
 
   return <main className="auth-page">
     <section className="auth-story">
-      <div className="brand brand-light"><span className="brand-mark"><Leaf size={21} /></span><span>Farmer Saathi</span></div>
+      <div className="brand brand-light"><span className="brand-mark"><img src="/logo.png" alt="Farmer Saathi Logo" className="brand-logo-img" /></span><span>Farmer Saathi</span></div>
       <div className="auth-story-copy"><span className="eyebrow light-eyebrow"><span className="live-dot" />{language === 'kn' ? 'ಪ್ರತಿ ಬೆಳೆಯ ಋತುವಿಗೂ ಸಹಾಯ' : language === 'hi' ? 'हर फसल के मौसम में साथ' : 'A little help for every growing season'}</span>
         <h1>{language === 'kn' ? <>ಒಳ್ಳೆಯ ನಿರ್ಧಾರಗಳು<br />ಇಲ್ಲಿಂದ ಬೆಳೆಯುತ್ತವೆ.</> : language === 'hi' ? <>अच्छे फैसले<br />यहीं से बढ़ते हैं।</> : <>Good decisions<br />grow from here.</>}</h1>
         <p>{language === 'kn' ? 'ಹವಾಮಾನ, ಮಾರುಕಟ್ಟೆ ಮಾಹಿತಿ ಮತ್ತು ಕೃಷಿ ಸಲಹೆ ಒಂದೇ ಕಡೆ.' : language === 'hi' ? 'मौसम, बाज़ार की जानकारी और खेती की सलाह एक ही जगह।' : 'Weather, market information and practical crop guidance, together in one place.'}</p>

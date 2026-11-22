@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
 
   return <main className="verification-page">
     <section className="verification-card card" aria-labelledby="reset-password-title">
-      <div className="brand"><span className="brand-mark"><Leaf size={21} /></span><span>Farmer Saathi</span></div>
+      <div className="brand"><span className="brand-mark"><img src="/logo.png" alt="Farmer Saathi Logo" className="brand-logo-img" /></span><span>Farmer Saathi</span></div>
       <h1 id="reset-password-title">{copy.resetTitle}</h1>
       {status === 'ready' || status === 'submitting' ? <>
         <p className="muted">{copy.resetDescription}</p>

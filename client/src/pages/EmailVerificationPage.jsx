@@ -46,7 +46,7 @@ export default function EmailVerificationPage({ onAuthenticated }) {
 
   return <main className="verification-page">
     <section className="verification-card card" aria-labelledby="verification-title">
-      <div className="brand"><span className="brand-mark"><Leaf size={21} /></span><span>Farmer Saathi</span></div>
+      <div className="brand"><span className="brand-mark"><img src="/logo.png" alt="Farmer Saathi Logo" className="brand-logo-img" /></span><span>Farmer Saathi</span></div>
       <h1 id="verification-title">{copy.title}</h1>
       {status === 'ready' && <p className="muted">{copy.ready}</p>}
       {status === 'submitting' && <p className="verification-progress" role="status"><LoaderCircle className="spin" size={18} />{copy.verifying}</p>}

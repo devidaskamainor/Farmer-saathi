@@ -150,7 +150,8 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .auth-story { position: relative; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; padding: 38px 8.5%; color: #f7f5e9; background: #284a32; }
 .brand { position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 10px; color: #304e36; font-family: Manrope, sans-serif; font-size: 16px; font-weight: 800; letter-spacing: -.035em; }
 .brand-light { color: #f8f7ef; }
-.brand-mark { display: grid; width: 35px; height: 35px; place-items: center; border-radius: 11px; color: #315d3d; background: #e8efde; }
+.brand-mark { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; color: #315d3d; background: #e8efde; overflow: hidden; flex-shrink: 0; }
+.brand-logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block; }
 .auth-story-copy { position: relative; z-index: 2; max-width: 440px; margin: auto 0; padding-bottom: 45px; }
 .light-eyebrow { color: #d0dfc8; }
 .auth-story-copy .eyebrow { display: inline-flex; align-items: center; gap: 8px; }

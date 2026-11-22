@@ -1,0 +1,22 @@
+{
+  "name": "Farmer Saathi",
+  "short_name": "Saathi",
+  "description": "Smart Farming. Better Tomorrow. Practical, multilingual farming guidance for Indian farmers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#284a32",
+  "theme_color": "#284a32",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

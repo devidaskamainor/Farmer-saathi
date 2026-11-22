@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
 
   return <main className="verification-page">
     <section className="verification-card card" aria-labelledby="forgot-password-title">
-      <div className="brand"><span className="brand-mark"><Leaf size={21} /></span><span>Farmer Saathi</span></div>
+      <div className="brand"><span className="brand-mark"><img src="/logo.png" alt="Farmer Saathi Logo" className="brand-logo-img" /></span><span>Farmer Saathi</span></div>
       <h1 id="forgot-password-title">{copy.forgotTitle}</h1>
       <p className="muted">{copy.forgotDescription}</p>
       <form className="form-stack" onSubmit={submit}>

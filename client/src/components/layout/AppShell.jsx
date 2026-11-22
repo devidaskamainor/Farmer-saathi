@@ -53,7 +53,7 @@ export default function AppShell({ farmer, setFarmer, onSignOut }) {
   return <div className="app-shell">
     {mobileNav && <button className="mobile-backdrop" onClick={() => setMobileNav(false)} aria-label="Close navigation" />}
     <aside className={`sidebar ${mobileNav ? 'sidebar-open' : ''}`}>
-      <Link to="/dashboard" className="brand"><span className="brand-mark"><Leaf size={21} /></span><span>Farmer Saathi</span></Link>
+      <Link to="/dashboard" className="brand"><span className="brand-mark"><img src="/logo.png" alt="Farmer Saathi Logo" className="brand-logo-img" /></span><span>Farmer Saathi</span></Link>
       <div className="side-section-label">YOUR FARM</div>
       <nav className="side-nav" aria-label="Main navigation">{nav.map(({ to, key, icon: Icon }) => <NavLink key={to} to={to} onClick={() => setMobileNav(false)} className={({ isActive }) => `nav-item ${isActive ? 'nav-active' : ''}`}><Icon size={18} strokeWidth={1.8} /><span>{t[key]}</span>{key === 'assistant' && <span className="nav-new">AI</span>}</NavLink>)}</nav>
       <div className="sidebar-bottom"><div className="helper-card"><div className="helper-icon"><Sprout size={18} /></div><b>Growing takes care.</b><span>Take one decision at a time.</span></div>
