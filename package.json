@@ -11,9 +11,18 @@
     "dev:client": "npm run dev -w client",
     "dev:server": "npm run dev -w server",
     "build": "npm run build -w client",
+    "test": "npm run test -w server",
+    "test:all": "node scripts/verify-k8s-docker.mjs && npm run test -w server && npm run build -w client",
+    "docker:build": "docker build -t farmer-saathi:latest .",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f app",
+    "k8s:verify": "node scripts/verify-k8s-docker.mjs",
+    "k8s:apply": "kubectl apply -k k8s",
+    "k8s:delete": "kubectl delete -k k8s",
     "db:config": "npm run db:config -w server",
     "start": "npm run start -w server",
-    "open": "node -e \"import('node:child_process').then(cp => cp.exec(process.platform === 'win32' ? 'start http://localhost:4000' : 'open http://localhost:4000'))\""
+    "open": "node -e \"import('node:child_process').then(cp => cp.exec(process.platform === 'win32' ? 'start http://localhost:4000' : process.platform === 'darwin' ? 'open http://localhost:4000' : 'xdg-open http://localhost:4000'))\""
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

@@ -23,6 +23,9 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Verify Docker and Kubernetes Manifests
+        run: node scripts/verify-k8s-docker.mjs
+
       - name: Run Backend Test Suite
         run: node --test server/test/*.test.js
 
