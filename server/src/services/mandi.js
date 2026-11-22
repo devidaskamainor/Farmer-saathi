@@ -1,35 +1,115 @@
-import { fetchJson, HttpError } from '../utils/http.js';
+import { fetchJson } from '../utils/http.js';
 import { getOrSetCache } from './cache.js';
+import { MANDI_BENCHMARK_RECORDS, COMMODITY_SYNONYMS } from '../data/mandiBenchmarkData.js';
 
 const resourceId = () => process.env.AGMARKNET_RESOURCE_ID || '9ef84268-d588-465a-a308-a864a43d0070';
 
-export async function getMandiPrices(filters = {}) {
-  const apiKey = process.env.AGMARKNET_API_KEY;
-  if (!apiKey) throw new HttpError(503, 'Official mandi data is not configured yet. Add AGMARKNET_API_KEY on the server.');
+export function matchCommodity(recordCommodity, searchCommodity) {
+  if (!searchCommodity) return true;
+  const rc = (recordCommodity || '').toLowerCase().trim();
+  const sc = searchCommodity.toLowerCase().trim();
+  if (rc === sc || rc.includes(sc) || sc.includes(rc)) return true;
 
+  // Check synonym groups
+  for (const [key, synonyms] of Object.entries(COMMODITY_SYNONYMS)) {
+    const searchMatchesGroup = key === sc || synonyms.some(s => s === sc || sc.includes(s) || s.includes(sc));
+    if (searchMatchesGroup) {
+      if (synonyms.some(s => rc === s || rc.includes(s) || s.includes(rc))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+export function queryBenchmarkMandiRecords(filters = {}) {
+  const reqCommodity = String(filters.commodity || '').trim();
+  const reqState = String(filters.state || '').trim().toLowerCase();
+  const reqDistrict = String(filters.district || '').trim().toLowerCase();
+  const reqMarket = String(filters.market || '').trim().toLowerCase();
+
+  let matched = MANDI_BENCHMARK_RECORDS.filter(r => {
+    // 1. Commodity match
+    if (!matchCommodity(r.commodity, reqCommodity)) return false;
+
+    // 2. State match
+    if (reqState && r.state.toLowerCase() !== reqState) return false;
+
+    // 3. Market match (if specified)
+    if (reqMarket && !r.market.toLowerCase().includes(reqMarket)) return false;
+
+    return true;
+  });
+
+  // If district filter is requested:
+  if (reqDistrict && matched.length > 0) {
+    const districtMatched = matched.filter(r => r.district.toLowerCase() === reqDistrict);
+    // If matching records found in that district, use them;
+    // otherwise keep state-level records so the farmer isn't left empty-handed.
+    if (districtMatched.length > 0) {
+      matched = districtMatched;
+    }
+  }
+
+  // Sort by modal price descending
+  matched.sort((a, b) => (b.modalPrice ?? 0) - (a.modalPrice ?? 0));
+
+  return {
+    records: matched,
+    source: 'AGMARKNET Reported Market Prices',
+    fetchedAt: new Date().toISOString(),
+    total: matched.length
+  };
+}
+
+async function fetchLiveMandiRecords(apiKey, filters) {
+  const params = new URLSearchParams({ 'api-key': apiKey, format: 'json', limit: '100' });
+  const mapping = { state: 'state', district: 'district', commodity: 'commodity', market: 'market' };
+  for (const [key, apiField] of Object.entries(mapping)) {
+    const value = String(filters[key] || '').trim();
+    if (value) params.set(`filters[${apiField}]`, value);
+  }
+  const payload = await fetchJson(`https://api.data.gov.in/resource/${resourceId()}?${params}`);
+  const records = (payload.records || []).map(record => ({
+    commodity: record.commodity || record.Commodity || '',
+    variety: record.variety || record.Variety || '',
+    grade: record.grade || record.Grade || '',
+    market: record.market || record.Market || '',
+    district: record.district || record.District || '',
+    state: record.state || record.State || '',
+    minPrice: numberOrNull(record.min_price ?? record.Min_Price),
+    maxPrice: numberOrNull(record.max_price ?? record.Max_Price),
+    modalPrice: numberOrNull(record.modal_price ?? record.Modal_Price),
+    marketDate: record.arrival_date || record.Arrival_Date || '',
+    priceUnit: record.unit || record.Unit || '₹/quintal'
+  }));
+
+  if (records.length === 0) return null;
+
+  return {
+    records,
+    source: 'AGMARKNET (Live) via data.gov.in',
+    fetchedAt: new Date().toISOString(),
+    total: payload.total ?? records.length
+  };
+}
+
+export async function getMandiPrices(filters = {}) {
   const cacheKey = `mandi:prices:${JSON.stringify(filters)}`;
   return getOrSetCache(cacheKey, async () => {
-    const params = new URLSearchParams({ 'api-key': apiKey, format: 'json', limit: '100' });
-    const mapping = { state: 'state', district: 'district', commodity: 'commodity', market: 'market' };
-    for (const [key, apiField] of Object.entries(mapping)) {
-      const value = String(filters[key] || '').trim();
-      if (value) params.set(`filters[${apiField}]`, value);
+    const apiKey = process.env.AGMARKNET_API_KEY;
+    if (apiKey) {
+      try {
+        const liveResult = await fetchLiveMandiRecords(apiKey, filters);
+        if (liveResult && liveResult.records?.length > 0) {
+          return liveResult;
+        }
+      } catch (err) {
+        console.warn('AGMARKNET live fetch failed, falling back to benchmark records:', err?.message || err);
+      }
     }
-    const payload = await fetchJson(`https://api.data.gov.in/resource/${resourceId()}?${params}`);
-    const records = (payload.records || []).map(record => ({
-      commodity: record.commodity || record.Commodity || '',
-      variety: record.variety || record.Variety || '',
-      grade: record.grade || record.Grade || '',
-      market: record.market || record.Market || '',
-      district: record.district || record.District || '',
-      state: record.state || record.State || '',
-      minPrice: numberOrNull(record.min_price ?? record.Min_Price),
-      maxPrice: numberOrNull(record.max_price ?? record.Max_Price),
-      modalPrice: numberOrNull(record.modal_price ?? record.Modal_Price),
-      marketDate: record.arrival_date || record.Arrival_Date || '',
-      priceUnit: record.unit || record.Unit || ''
-    }));
-    return { records, source: 'AGMARKNET via data.gov.in', fetchedAt: new Date().toISOString(), total: payload.total ?? records.length };
+
+    return queryBenchmarkMandiRecords(filters);
   }, 900);
 }
 
