@@ -19,6 +19,7 @@ import notificationRoutes from './routes/notifications.js';
 import { checkDatabaseConnection } from './config/database.js';
 import { getCacheHealth } from './services/cache.js';
 import { getFcmHealth } from './services/fcm.js';
+import { getKafkaStatus } from './services/kafka.js';
 
 const app = express();
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -91,6 +92,7 @@ app.get('/api/health', async (_req, res, next) => {
       database: configured ? 'connected' : 'not_configured',
       cache: getCacheHealth(),
       fcm: getFcmHealth(),
+      kafka: getKafkaStatus(),
       timestamp: new Date().toISOString()
     });
   } catch (error) { next(error); }

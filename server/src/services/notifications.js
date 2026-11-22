@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { sendNotificationToTokens, sendNotificationToTopic } from './fcm.js';
+import { publishNotificationEvent } from './kafka.js';
 import {
   detectActiveHolidayOrEvent,
   getUpcomingHolidaysAndEvents,
@@ -221,6 +222,11 @@ export async function createAndBroadcastNotification(pool, {
     data: { id: notificationId, type, actionUrl },
     icon
   });
+
+  // Publish notification dispatch to Kafka message queue
+  try {
+    await publishNotificationEvent(newNotification);
+  } catch {}
 
   return {
     success: true,

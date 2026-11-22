@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import {
   createFarmActivity, deleteFarmActivity, listFarmHistory, updateFarmActivity, validateFarmActivity
 } from '../services/farmHistory.js';
+import { publishActivityEvent } from '../services/kafka.js';
 import { HttpError } from '../utils/http.js';
 
 const router = Router();
@@ -18,6 +19,9 @@ router.post('/', async (req, res, next) => {
   try {
     const activity = validateFarmActivity(req.body || {});
     const saved = await createFarmActivity(getDatabasePool(), req.authUser.id, activity);
+    try {
+      await publishActivityEvent(saved, req.authUser.id);
+    } catch {}
     res.status(201).json({ activity: saved });
   } catch (error) { next(error); }
 });
