@@ -47,3 +47,39 @@ export async function requireAuth(req, res, next) {
     next(error);
   }
 }
+
+export async function optionalAuth(req, _res, next) {
+  try {
+    const bearerToken = parseBearerToken(req.headers.authorization);
+    if (bearerToken) {
+      const payload = verifyJwt(bearerToken);
+      if (payload?.sub) {
+        const farmer = await getFarmerById(getDatabasePool(), payload.sub);
+        if (farmer) {
+          req.authUser = { id: farmer._id, email: farmer.email };
+          req.farmer = farmer;
+          return next();
+        }
+      }
+    }
+    const token = parseSessionCookie(req.headers.cookie);
+    if (token) {
+      const jwtPayload = verifyJwt(token);
+      if (jwtPayload?.sub) {
+        const farmer = await getFarmerById(getDatabasePool(), jwtPayload.sub);
+        if (farmer) {
+          req.authUser = { id: farmer._id, email: farmer.email };
+          req.farmer = farmer;
+          return next();
+        }
+      }
+      const farmer = await loadSession(getDatabasePool(), token);
+      if (farmer) {
+        req.authUser = { id: farmer._id, email: farmer.email };
+        req.farmer = farmer;
+      }
+    }
+  } catch {}
+  next();
+}
+

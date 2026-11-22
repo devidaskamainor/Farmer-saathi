@@ -63,7 +63,7 @@ export default function AppShell({ farmer, setFarmer, onSignOut }) {
     <main className="main-area">
       <header className="topbar"><button className="mobile-menu" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu /></button><div className="crumbs"><span>Farmer Saathi</span><span className="crumb-slash">/</span><b>{t[page?.key] || t.overview}</b></div>
         <div className="topbar-right">
-          <NotificationBell />
+          <NotificationBell preferredLanguage={farmer?.preferredLanguage} />
           <ThemePicker />
           <span className="topbar-divider" />
           <label className="language-control"><Globe2 size={16} /><span className="sr-only">{t.language}</span><select aria-label={t.language} value={farmer?.preferredLanguage || 'en'} onChange={e => changeLanguage(e.target.value)}>{languageOptions.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}</select><ChevronDown size={13} /></label>

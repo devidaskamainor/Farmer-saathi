@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { askGroq, localizeAssistantText } from '../services/groq.js';
 import { getMandiPrices } from '../services/mandi.js';
 import { getWeather } from '../services/weather.js';
@@ -9,6 +9,33 @@ import { getLanguageDefinition } from '../config/languages.js';
 import { HttpError } from '../utils/http.js';
 
 const router = Router();
+
+// Translation endpoint available with optional authentication
+router.post('/translate', optionalAuth, async (req, res, next) => {
+  try {
+    const text = String(req.body?.text || '').trim();
+    if (!text) throw new HttpError(400, 'Enter text to translate.');
+    const targetLang = req.body?.targetLanguage || req.body?.language || req.farmer?.preferredLanguage || 'kn';
+    const langDef = getLanguageDefinition(targetLang);
+    if (targetLang === 'en') {
+      return res.json({ translatedText: text, answer: text, language: 'en' });
+    }
+    const targetFarmer = req.farmer ? { ...req.farmer, preferredLanguage: targetLang } : { preferredLanguage: targetLang };
+    const prompt = `Translate the following agricultural information accurately and naturally into ${langDef.englishName} (${langDef.nativeName}) script. Keep all crop names, numbers, measurements, dates, prices, and guidance exact. Do not add outside commentary or explain in English.\n\nText to translate:\n${text.slice(0, 4000)}`;
+    const result = await askGroq({
+      farmer: targetFarmer,
+      task: `Translate into ${langDef.englishName}`,
+      prompt
+    });
+    res.json({
+      translatedText: result.answer,
+      answer: result.answer,
+      language: targetLang,
+      source: `Groq AI (${langDef.englishName})`
+    });
+  } catch (error) { next(error); }
+});
+
 router.use(requireAuth);
 
 // Route conversational questions through the existing data and advice services.

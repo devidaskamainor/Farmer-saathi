@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Sparkles, PartyPopper, Calendar, Check, Volume2, ShieldCheck, ExternalLink } from 'lucide-react';
+import { Bell, Sparkles, PartyPopper, Calendar, Check, Volume2, Square, LoaderCircle, ShieldCheck, ExternalLink } from 'lucide-react';
 import {
   fetchNotifications,
   markAllNotificationsRead,
@@ -8,20 +8,32 @@ import {
   triggerFeatureAlert,
   triggerHolidayAlert
 } from '../../services/notifications.js';
+import { speakText, stopSpeaking } from '../../services/voice.js';
+import { api } from '../../services/api.js';
 
-export default function NotificationBell() {
+export default function NotificationBell({ preferredLanguage = 'en' }) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeTab, setActiveTab] = useState('all');
   const [pushStatus, setPushStatus] = useState(() => (typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'));
   const [busy, setBusy] = useState(false);
+  const [speakingNotifId, setSpeakingNotifId] = useState(null);
+  const [translatingNotifId, setTranslatingNotifId] = useState(null);
   const dropdownRef = useRef(null);
+  const speechReqRef = useRef(0);
 
   useEffect(() => {
     loadNotifications();
     const interval = setInterval(loadNotifications, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      speechReqRef.current += 1;
+      stopSpeaking();
+    };
   }, []);
 
   useEffect(() => {
@@ -91,6 +103,52 @@ export default function NotificationBell() {
       await loadNotifications();
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleSpeakNotification(e, item) {
+    e.stopPropagation();
+    if (speakingNotifId === item.id) {
+      speechReqRef.current += 1;
+      stopSpeaking();
+      setSpeakingNotifId(null);
+      return;
+    }
+
+    const currentReq = ++speechReqRef.current;
+    stopSpeaking();
+    setSpeakingNotifId(item.id);
+
+    let textToSpeak = `${item.title}. ${item.body}`;
+    const targetLang = preferredLanguage || 'en';
+
+    if (targetLang !== 'en') {
+      setTranslatingNotifId(item.id);
+      try {
+        const { data } = await api.post('/ai/translate', {
+          text: textToSpeak,
+          targetLanguage: targetLang
+        });
+        if (data?.translatedText) {
+          textToSpeak = data.translatedText;
+        }
+      } catch (err) {
+        console.warn('Notification translation failed, speaking original:', err?.message);
+      } finally {
+        if (currentReq === speechReqRef.current) {
+          setTranslatingNotifId(null);
+        }
+      }
+    }
+
+    if (currentReq !== speechReqRef.current) return;
+
+    try {
+      await speakText(textToSpeak, targetLang);
+    } finally {
+      if (currentReq === speechReqRef.current) {
+        setSpeakingNotifId(null);
+      }
     }
   }
 
@@ -272,13 +330,29 @@ export default function NotificationBell() {
                       {isHoliday ? <PartyPopper size={16} /> : isFeature ? <Sparkles size={16} /> : <Calendar size={16} />}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                         <span style={{ fontSize: '13px', fontWeight: item.isRead ? '600' : '700', color: 'var(--text-primary, #0f172a)' }}>
                           {item.title}
                         </span>
-                        {!item.isRead && (
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            className={`notification-voice-btn ${speakingNotifId === item.id ? 'active' : ''}`}
+                            onClick={(e) => handleSpeakNotification(e, item)}
+                            title="Listen in your language (ಧ್ವನಿಯಲ್ಲಿ ಕೇಳಿ)"
+                          >
+                            {translatingNotifId === item.id ? (
+                              <LoaderCircle size={13} className="spin" />
+                            ) : speakingNotifId === item.id ? (
+                              <Square size={13} />
+                            ) : (
+                              <Volume2 size={13} />
+                            )}
+                          </button>
+                          {!item.isRead && (
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+                          )}
+                        </div>
                       </div>
                       <p style={{ margin: '3px 0 0', fontSize: '12px', color: 'var(--text-secondary, #475569)', lineHeight: '1.4' }}>
                         {item.body}

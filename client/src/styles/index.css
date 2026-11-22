@@ -1414,3 +1414,146 @@ td small { display: block; margin-top: 3px; color: #9aa39b; font-size: 9px; }
   color: var(--green);
 }
 
+/* ==========================================================================
+   Voice & Translation Enhancement Styles (Sarvam AI / Regional Languages)
+   ========================================================================== */
+.advice-voice-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding: 8px 12px;
+  background: var(--paper-alt, rgba(34, 197, 94, 0.04));
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 10px;
+}
+
+.voice-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.voice-action-btn.active {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  animation: pulse-ring 1.8s infinite;
+}
+
+.voice-mic-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line, #cbd5e1);
+  background: var(--paper, #ffffff);
+  color: var(--ink-soft, #64748b);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.voice-mic-btn:hover {
+  background: var(--green-soft, #eefbf1);
+  color: var(--green, #16a34a);
+  border-color: var(--green, #16a34a);
+}
+
+.voice-mic-btn.listening {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  animation: pulse-ring 1.4s infinite;
+}
+
+.mandi-voice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: var(--paper-alt, #f8fafc);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 10px;
+}
+
+.row-voice-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft, #64748b);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.row-voice-btn:hover {
+  background: var(--green-soft, #eefbf1);
+  color: var(--green, #16a34a);
+  border-color: var(--green-soft, #86efac);
+}
+
+.row-voice-btn.active {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.notification-voice-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.16s ease;
+  margin-left: 6px;
+}
+
+.notification-voice-btn:hover {
+  background: #dcfce7;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+.notification-voice-btn.active {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  animation: pulse-ring 1.5s infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+
