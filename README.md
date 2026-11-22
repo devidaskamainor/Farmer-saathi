@@ -193,20 +193,18 @@ The current UI resources are English-first with partial Hindi and Kannada transl
 
 ## Project structure
 
+Detailed documentation and architectural layouts are available in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 ```text
-client/                   React + Vite frontend
-  src/app/                Application shell and routed UI
-  src/services/           API client and browser voice integrations
-  src/styles/             Global frontend styles
-server/
-  scripts/                PostgreSQL schema and one-time data migration commands
-  src/routes/             Express API route modules
-  src/services/           Business integrations and data services
-  src/config/             Server configuration and PostgreSQL pool
-  src/middleware/         Authentication and request middleware
-  test/                   Node test suite
-database/migrations/      Version-controlled PostgreSQL schema migrations
-docs/                     Migration notes and project documentation
+client/                   React + Vite frontend (components, pages, services, styles)
+server/                   Express REST API (routes, services, config, middleware, tests)
+shared/                   Shared modules (languages, TTS mappings, speech sanitization)
+database/migrations/      Version-controlled PostgreSQL schema migrations (001–007)
+k8s/                      Kubernetes enterprise manifests (deployment, HPA, PDB, Kafka, Ingress)
+postman/                  Postman collection (10 folders), environment, and test guide
+deploy/                   Production reverse proxy configurations (nginx.conf)
+docs/                     Architecture guides, specifications (spec.md), and migration notes
+scripts/                  DevOps verification and testing automation scripts
 ```
 
 ## Deployment
