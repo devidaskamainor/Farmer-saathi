@@ -1,8 +1,9 @@
 import './env.js';
 
 export function getClientUrl() {
+  const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
   const configuredOrigin = process.env.CLIENT_ORIGIN?.split(',')[0]?.trim();
-  const clientUrl = process.env.CLIENT_URL?.trim() || configuredOrigin ||
+  const clientUrl = process.env.CLIENT_URL?.trim() || configuredOrigin || vercelOrigin ||
     (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173');
   if (!clientUrl) throw new Error('Set CLIENT_URL to the frontend URL before sending verification emails.');
 

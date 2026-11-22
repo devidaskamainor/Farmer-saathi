@@ -25,13 +25,15 @@ import { metricsMiddleware, getMetrics, getContentType } from './services/metric
 const app = express();
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const clientDist = resolve(projectRoot, 'client/dist');
-const allowedOrigins = process.env.CLIENT_ORIGIN?.split(',').map(value => value.trim()).filter(Boolean) || ['http://localhost:5173'];
-const apiOrigin = new URL(process.env.API_PUBLIC_URL || `http://localhost:${Number(process.env.PORT) || 4000}`).origin;
+const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
+const allowedOrigins = process.env.CLIENT_ORIGIN?.split(',').map(value => value.trim()).filter(Boolean) || [vercelOrigin, 'http://localhost:5173'].filter(Boolean);
+const apiOrigin = new URL(process.env.API_PUBLIC_URL || vercelOrigin || `http://localhost:${Number(process.env.PORT) || 4000}`).origin;
 const allowedMutationOrigins = new Set([...allowedOrigins, apiOrigin]);
 
 function isAllowedClientOrigin(origin) {
   if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return true;
   if (/postman|pstmn\.io|vscode/i.test(origin)) return true;
+  if (typeof origin === 'string' && (origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com'))) return true;
   if (process.env.NODE_ENV === 'production') return false;
   try {
     const url = new URL(origin);
