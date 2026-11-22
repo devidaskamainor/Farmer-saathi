@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: farmer-saathi-deployment
+  labels:
+    app: farmer-saathi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: farmer-saathi
+  template:
+    metadata:
+      labels:
+        app: farmer-saathi
+    spec:
+      containers:
+        - name: farmer-saathi
+          image: farmer-saathi:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: farmer-saathi-config
+            - secretRef:
+                name: farmer-saathi-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5

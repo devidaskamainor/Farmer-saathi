@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: farmer-saathi-config
+  labels:
+    app: farmer-saathi
+data:
+  NODE_ENV: "production"
+  PORT: "4000"
+  KAFKA_BROKERS: "kafka-service:9092"
+  KAFKA_CLIENT_ID: "farmer-saathi-k8s"
+  CLIENT_ORIGIN: "https://farmersaathi.example.com,http://localhost:4000"
+  CLIENT_URL: "https://farmersaathi.example.com"

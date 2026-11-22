@@ -108,11 +108,15 @@ async function synthesizeSingleChunk(chunkText, voice, apiKey) {
 
   const encodedAudio = result?.audios?.[0];
   if (typeof encodedAudio !== 'string' || !encodedAudio ||
-      encodedAudio.length > maximumAudioResponseBytes * 4 / 3 ||
-      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encodedAudio)) {
+      encodedAudio.length > maximumAudioResponseBytes * 4 / 3) {
     throw new HttpError(502, 'The speech service returned invalid audio. Please try again.');
   }
-  const audio = Buffer.from(encodedAudio, 'base64');
+  let audio;
+  try {
+    audio = Buffer.from(encodedAudio, 'base64');
+  } catch {
+    throw new HttpError(502, 'The speech service returned invalid audio. Please try again.');
+  }
   if (!audio.length || audio.length > maximumAudioResponseBytes) {
     throw new HttpError(502, 'The speech service returned invalid audio. Please try again.');
   }

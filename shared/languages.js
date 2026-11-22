@@ -87,6 +87,10 @@ export function isSupportedLanguage(language) {
 export function cleanSpeechText(text) {
   return String(text || '')
     .replace(/^#+\s+/gm, '')
+    .replace(/<br\s*\/?>/gi, '. ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/^\|?[\s:-|-]+\|?$/gm, '')
+    .replace(/\|/g, ', ')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')
     .replace(/_([^_]+)_/g, '$1')
@@ -97,6 +101,7 @@ export function cleanSpeechText(text) {
     .replace(/---+|===+/g, '')
     .replace(/\n{2,}/g, '. ')
     .replace(/\n/g, ' ')
+    .replace(/,\s*,+/g, ',')
     .replace(/\s+/g, ' ')
     .trim();
 }

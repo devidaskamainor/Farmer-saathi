@@ -12,20 +12,23 @@ router.get('/search', (req, res) => {
   const q = String(req.query.q || '').trim();
   if (q.length > 100) throw new HttpError(400, 'Search text must be 100 characters or fewer.');
   validateFilters(req.query.state, req.query.category);
-  res.json(catalogueResponse(findSchemes({ q, state: req.query.state, category: req.query.category }), req.farmer, req.query.language));
+  const langParam = req.query.language || req.query.lang;
+  res.json(catalogueResponse(findSchemes({ q, state: req.query.state, category: req.query.category }), req.farmer, langParam));
 });
 
 router.get('/', (req, res) => {
   validateFilters(req.query.state, req.query.category);
   const state = String(req.query.state || '').trim();
   const category = String(req.query.category || '').trim();
-  res.json(catalogueResponse(findSchemes({ state, category }), req.farmer, req.query.language));
+  const langParam = req.query.language || req.query.lang;
+  res.json(catalogueResponse(findSchemes({ state, category }), req.farmer, langParam));
 });
 
 router.get('/:id', (req, res) => {
   const scheme = findSchemeById(req.params.id);
   if (!scheme) throw new HttpError(404, 'Scheme not found.');
-  const language = requestedLanguage(req.query.language, req.farmer.preferredLanguage);
+  const langParam = req.query.language || req.query.lang;
+  const language = requestedLanguage(langParam, req.farmer.preferredLanguage);
   res.json({
     scheme: {
       ...localizeScheme(scheme, language),
@@ -37,7 +40,8 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/recommendations', (req, res) => {
-  res.json(catalogueResponse(potentiallyRelevantSchemes(req.farmer), req.farmer, req.body?.language, 'Potentially relevant'));
+  const langParam = req.body?.language || req.body?.lang || req.query?.language || req.query?.lang;
+  res.json(catalogueResponse(potentiallyRelevantSchemes(req.farmer), req.farmer, langParam, 'Potentially relevant'));
 });
 
 function catalogueResponse(results, farmer, languageValue, relevance = 'Verified catalogue') {
