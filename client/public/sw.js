@@ -1,3 +1,6 @@
+// @ts-nocheck
+/// <reference no-default-lib="true"/>
+/// <reference lib="es2022" />
 /// <reference lib="webworker" />
 /* eslint-env serviceworker */
 
@@ -7,56 +10,68 @@ const SHELL_URLS = ['/', '/index.html'];
 // Pre-cache essential app shell assets safely
 self.addEventListener('install', event => {
   event.waitUntil(
-    fetch('/index.html')
-      .then(response => {
-        if (!response.ok) throw new Error('Network response not ok');
-        return response.text();
-      })
-      .then(async html => {
-        const assets = [];
-        const matches = html.matchAll(/(?:src|href)=["']([^"']+)["']/g);
-        for (const match of matches) {
-          try {
-            const url = new URL(match[1], self.location.origin);
-            if (url.origin === self.location.origin && /\.(?:js|css|woff2?|svg|png|ico)$/i.test(url.pathname)) {
-              assets.push(url.pathname);
-            }
-          } catch {}
-        }
-
+    (async () => {
+      try {
         const cache = await caches.open(CACHE_NAME);
-        const uniqueUrls = [...new Set([...SHELL_URLS, ...assets])];
 
-        // Safely cache each asset individually so one missing asset never fails the installation
-        await Promise.all(
-          uniqueUrls.map(url =>
-            fetch(url, { cache: 'no-cache' })
-              .then(res => {
-                if (res.ok) return cache.put(url, res);
-              })
-              .catch(() => {})
+        // Pre-cache primary shell URLs safely
+        await Promise.allSettled(
+          SHELL_URLS.map(url =>
+            fetch(url, { cache: 'no-cache' }).then(res => {
+              if (res.ok) return cache.put(url, res);
+            })
           )
         );
-      })
-      .catch(err => {
+
+        // Safely extract and cache linked static assets from index.html if available
+        const indexRes = await cache.match('/index.html');
+        if (indexRes) {
+          const html = await indexRes.text();
+          const assets = [];
+          const matches = html.matchAll(/(?:src|href)=["']([^"']+)["']/g);
+          for (const match of matches) {
+            try {
+              const url = new URL(match[1], self.location.origin);
+              if (url.origin === self.location.origin && /\.(?:js|css|woff2?|svg|png|ico)$/i.test(url.pathname)) {
+                assets.push(url.pathname);
+              }
+            } catch {}
+          }
+          const uniqueAssets = [...new Set(assets)];
+          await Promise.allSettled(
+            uniqueAssets.map(url =>
+              fetch(url, { cache: 'no-cache' }).then(res => {
+                if (res.ok) return cache.put(url, res);
+              })
+            )
+          );
+        }
+      } catch (err) {
         console.warn('App-shell offline caching notice:', err?.message || err);
-      })
-      .then(() => self.skipWaiting())
+      } finally {
+        await self.skipWaiting();
+      }
+    })()
   );
 });
 
 // Clean up old caches on activation
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys()
-      .then(keys =>
-        Promise.all(
+    (async () => {
+      try {
+        const keys = await caches.keys();
+        await Promise.allSettled(
           keys
             .filter(key => key.startsWith('farmer-saathi-shell-') && key !== CACHE_NAME)
             .map(key => caches.delete(key))
-        )
-      )
-      .then(() => self.clients.claim())
+        );
+      } catch (err) {
+        console.warn('Cache cleanup notice:', err?.message || err);
+      } finally {
+        await self.clients.claim();
+      }
+    })()
   );
 });
 

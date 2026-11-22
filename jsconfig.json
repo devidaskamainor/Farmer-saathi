@@ -10,6 +10,7 @@
   },
   "include": [
     "client/src/**/*",
+    "client/public/**/*",
     "client/vite.config.js",
     "server/src/**/*",
     "server/test/**/*"

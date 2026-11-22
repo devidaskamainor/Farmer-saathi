@@ -1,3 +1,6 @@
+// @ts-nocheck
+/// <reference no-default-lib="true"/>
+/// <reference lib="es2022" />
 /// <reference lib="webworker" />
 /* eslint-env serviceworker */
 

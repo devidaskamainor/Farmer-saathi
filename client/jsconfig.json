@@ -10,6 +10,7 @@
   },
   "include": [
     "src/**/*",
+    "public/**/*",
     "vite.config.js"
   ],
   "exclude": [
