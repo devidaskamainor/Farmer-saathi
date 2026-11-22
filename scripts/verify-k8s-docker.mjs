@@ -42,6 +42,10 @@ assert(composeContent.includes('farmer-saathi-kafka'), 'Defines Apache Kafka ser
 assert(composeContent.includes('KAFKA_NUM_PARTITIONS: 3'), 'Kafka topics partitioned for concurrent message consumption');
 assert(composeContent.includes('4000:4000'), 'Maps web port 4000');
 assert(composeContent.includes('9092:9092'), 'Maps Kafka client port 9092');
+assert(composeContent.includes('farmer-saathi-prometheus'), 'Defines Prometheus metrics collection service');
+assert(composeContent.includes('farmer-saathi-grafana'), 'Defines Grafana visual analytics dashboard service');
+assert(composeContent.includes('9090:9090'), 'Maps Prometheus web port 9090');
+assert(composeContent.includes('3001:3000'), 'Maps Grafana analytics port 3001');
 
 console.log('\n--- 3. Validating Enterprise Kubernetes Suite (k8s/) ---');
 const k8sDir = path.join(rootDir, 'k8s');
@@ -58,6 +62,7 @@ const requiredK8sFiles = [
   'ingress.yaml',
   'hpa.yaml',
   'pdb.yaml',
+  'monitoring.yaml',
   'kustomization.yaml'
 ];
 
@@ -90,6 +95,14 @@ assert(Boolean(packageJson.scripts['start']), 'Production start script is verifi
 
 const gitAttributesPath = path.join(rootDir, '.gitattributes');
 assert(fs.existsSync(gitAttributesPath), '.gitattributes exists for cross-platform LF line endings normalization');
+
+console.log('\n--- 5. Validating Prometheus & Grafana Observability Suite ---');
+const promConfig = path.join(rootDir, 'monitoring/prometheus/prometheus.yml');
+assert(fs.existsSync(promConfig), 'Prometheus configuration exists at monitoring/prometheus/prometheus.yml');
+const grafanaDatasource = path.join(rootDir, 'monitoring/grafana/provisioning/datasources/prometheus.yml');
+assert(fs.existsSync(grafanaDatasource), 'Grafana automated datasource provisioning exists');
+const grafanaDashboard = path.join(rootDir, 'monitoring/grafana/dashboards/farmer-saathi-overview.json');
+assert(fs.existsSync(grafanaDashboard), 'Executive production dashboard exists at monitoring/grafana/dashboards/');
 
 console.log(`\nValidation complete: ${checkCount - errorCount}/${checkCount} checks passed.`);
 if (errorCount > 0) {

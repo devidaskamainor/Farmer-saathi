@@ -20,6 +20,7 @@ import { checkDatabaseConnection } from './config/database.js';
 import { getCacheHealth } from './services/cache.js';
 import { getFcmHealth } from './services/fcm.js';
 import { getKafkaStatus } from './services/kafka.js';
+import { metricsMiddleware, getMetrics, getContentType } from './services/metrics.js';
 
 const app = express();
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -76,6 +77,15 @@ app.use((req, res, next) => {
   }
   next();
 });
+app.use(metricsMiddleware);
+
+app.get(['/api/metrics', '/metrics'], async (_req, res, next) => {
+  try {
+    res.set('Content-Type', getContentType());
+    res.send(await getMetrics());
+  } catch (error) { next(error); }
+});
+
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: 'draft-7', legacyHeaders: false }));
 app.use('/api/ai', rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false }));
 app.use('/api/disease', rateLimit({ windowMs: 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false }));

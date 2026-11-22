@@ -14,3 +14,4 @@ resources:
   - ingress.yaml
   - hpa.yaml
   - pdb.yaml
+  - monitoring.yaml

@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'Farmer Saathi Dashboards'
+    orgId: 1
+    folder: 'Farmer Saathi Production'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

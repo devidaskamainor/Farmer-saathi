@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  scrape_timeout: 4s
+  external_labels:
+    cluster: 'farmer-saathi-production'
+    region: 'in-central'
+
+scrape_configs:
+  # 1. Farmer Saathi Main Application API & System Telemetry
+  - job_name: 'farmer-saathi-app'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets:
+          - 'app:4000'
+          - 'host.docker.internal:4000'
+        labels:
+          service: 'farmer-saathi-backend'
+          environment: 'production'
+
+  # 2. Prometheus Self-Monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus-engine'
