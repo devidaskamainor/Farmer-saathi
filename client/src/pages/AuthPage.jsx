@@ -39,6 +39,8 @@ export default function AuthPage({ onAuthenticated }) {
   const [listening, setListening] = useState(false);
   const [speechNotice, setSpeechNotice] = useState('');
   const recognitionRef = useRef(null);
+  const googleButtonRef = useRef(null);
+  const [gisReady, setGisReady] = useState(false);
   const copy = localizedCopy(authCopy, language);
   const questions = localizedCopy(registrationQuestions, language);
   const currentQuestion = questions[stepIndex];
@@ -47,6 +49,73 @@ export default function AuthPage({ onAuthenticated }) {
     recognitionRef.current?.abort();
     stopSpeaking();
   }, []);
+
+  async function handleGoogleCredentialResponse(response) {
+    if (!response?.credential) {
+      setError('Google sign-in did not return a valid credential. Please try again.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const { data } = await api.post('/auth/google', {
+        idToken: response.credential,
+        preferredLanguage: language
+      });
+      onAuthenticated(data);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) return;
+
+    let mounted = true;
+
+    function renderGsiButton() {
+      if (!mounted || !window.google?.accounts?.id || !googleButtonRef.current) return;
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: 260,
+          text: 'continue_with',
+          shape: 'rectangular',
+          logo_alignment: 'left'
+        });
+        setGisReady(true);
+      } catch (err) {
+        // Fall back to custom button if render fails
+      }
+    }
+
+    if (window.google?.accounts?.id) {
+      renderGsiButton();
+    } else {
+      const timer = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(timer);
+          renderGsiButton();
+        }
+      }, 250);
+      return () => {
+        mounted = false;
+        clearInterval(timer);
+      };
+    }
+    return () => { mounted = false; };
+  }, [language, register, mode, showLanguageChoice]);
 
   function updateLanguage(nextLanguage) {
     setLanguage(nextLanguage);
@@ -176,38 +245,44 @@ export default function AuthPage({ onAuthenticated }) {
   }
 
   function handleSocialAuth(provider) {
-  setError('');
-  setNotice('');
+    setError('');
+    setNotice('');
 
-  if (provider === 'google') {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (provider === 'google') {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-    if (!clientId) {
-      setError('Google sign-in is not configured. Please try again later.');
+      if (!clientId) {
+        setError('Google sign-in is not configured. Please try again later.');
+        return;
+      }
+
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            const renderedBtn = googleButtonRef.current?.querySelector('div[role="button"]');
+            if (renderedBtn) {
+              renderedBtn.click();
+            } else {
+              setError('Please click the Google button directly to complete sign-in.');
+            }
+          }
+        });
+        return;
+      }
+
+      setError('Google Sign-In is loading. Please check your connection and try again.');
       return;
     }
 
-    const redirectUri = window.location.origin;
-
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: 'token',
-      scope: 'openid email profile',
-      prompt: 'select_account',
-    });
-
-    console.log('Google OAuth redirect URI:', redirectUri);
-
-    window.location.assign(
-      `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
-    );
-
-    return;
+    setSocialModal(provider);
   }
-
-  setSocialModal(provider);
-}
 
   async function handleSelectSocialAccount(account) {
     const provider = socialModal || 'google';
@@ -356,15 +431,20 @@ export default function AuthPage({ onAuthenticated }) {
               <span>{copy.orContinueWith || 'Or continue with'}</span>
             </div>
             <div className="auth-social-buttons">
-              <button
-                type="button"
-                className="social-button social-button-google"
-                onClick={() => handleSocialAuth('google')}
-                disabled={busy}
-              >
-                <GoogleIcon />
-                <span>{copy.googleSignIn || 'Continue with Google'}</span>
-              </button>
+              <div className="google-sign-in-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div ref={googleButtonRef} style={{ display: gisReady ? 'block' : 'none', minHeight: '40px' }} />
+                {!gisReady && (
+                  <button
+                    type="button"
+                    className="social-button social-button-google"
+                    onClick={() => handleSocialAuth('google')}
+                    disabled={busy}
+                  >
+                    <GoogleIcon />
+                    <span>{copy.googleSignIn || 'Continue with Google'}</span>
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
                 className="social-button social-button-facebook"

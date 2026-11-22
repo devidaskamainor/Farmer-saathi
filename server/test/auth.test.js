@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import bcrypt from 'bcryptjs';
 import {
-  authenticateSocialAccount, createPasswordReset, loginAccount, registerAccount, resetPassword, verifyEmail
+  authenticateGoogleAccount, authenticateSocialAccount, createPasswordReset, deleteSession, loadSession, loginAccount, registerAccount, resetPassword, verifyEmail
 } from '../src/services/auth.js';
 import { hashSessionToken } from '../src/services/authSessions.js';
+import { verifyGoogleIdToken } from '../src/services/googleAuth.js';
 
 const farmerRow = {
   id: '2a1c4eb5-cf69-4c79-8a35-27c4bcb438f3',
@@ -216,6 +217,7 @@ test('authenticateSocialAccount logs in or registers user via google and faceboo
   let sessionCreated = false;
   const client = {
     async query(sql, values = []) {
+      if (sql === 'begin' || sql === 'commit') return { rows: [] };
       if (sql.includes('select id, email, email_verified_at from app_users')) return { rows: [] };
       if (sql.includes('insert into app_users')) {
         createdUser = true;
@@ -233,9 +235,14 @@ test('authenticateSocialAccount logs in or registers user via google and faceboo
   const pool = { async connect() { return client; } };
   const result = await authenticateSocialAccount(pool, {
     provider: 'google',
-    email: 'farmer.google@example.com',
-    name: 'Farmer Google',
-    preferredLanguage: 'kn'
+    idToken: 'mock-google-id-token',
+    preferredLanguage: 'kn',
+    customVerifier: async () => ({
+      googleId: 'g-12345',
+      email: 'farmer.google@example.com',
+      name: 'Farmer Google',
+      email_verified: true
+    })
   });
 
   assert.equal(createdUser, true);
@@ -244,14 +251,259 @@ test('authenticateSocialAccount logs in or registers user via google and faceboo
   assert.equal(result.farmer._id, farmerRow.id);
 });
 
-test('authenticateSocialAccount rejects unsupported providers and invalid emails', async () => {
+test('authenticateSocialAccount rejects unsupported providers and missing Google token', async () => {
   const pool = {};
   await assert.rejects(authenticateSocialAccount(pool, { provider: 'twitter', email: 'test@example.com' }), {
     status: 400,
     message: /Supported social providers/
   });
-  await assert.rejects(authenticateSocialAccount(pool, { provider: 'google', email: 'invalid-email' }), {
+  await assert.rejects(authenticateSocialAccount(pool, { provider: 'google', email: 'farmer@gmail.com' }), {
     status: 400,
-    message: /valid email/
+    message: /verified Google ID token is required/
   });
+});
+
+test('authenticateGoogleAccount creates new user and farmer, and sets up session', async () => {
+  let createdUser = false;
+  let sessionCreated = false;
+  let insertedFarmer = null;
+
+  const client = {
+    async query(sql, values = []) {
+      if (sql === 'begin' || sql === 'commit' || sql === 'rollback') return { rows: [] };
+      if (sql.includes('select id, email, email_verified_at from app_users')) return { rows: [] };
+      if (sql.includes('insert into app_users')) {
+        createdUser = true;
+        return { rows: [{ id: farmerRow.id, email: values[1] }] };
+      }
+      if (sql.includes('insert into farmers')) {
+        insertedFarmer = { ...farmerRow, name: values[1], email: values[2] };
+        return { rows: [insertedFarmer] };
+      }
+      if (sql.includes('insert into auth_sessions')) {
+        sessionCreated = true;
+        return { rows: [] };
+      }
+      return { rows: [] };
+    },
+    release() {}
+  };
+  const pool = { async connect() { return client; } };
+
+  const mockVerifier = async () => ({
+    googleId: 'google-sub-12345',
+    email: 'newfarmer@example.com',
+    name: 'New Google Farmer'
+  });
+
+  const result = await authenticateGoogleAccount(pool, {
+    idToken: 'mock-valid-id-token',
+    preferredLanguage: 'kn',
+    customVerifier: mockVerifier
+  });
+
+  assert.equal(createdUser, true);
+  assert.equal(sessionCreated, true);
+  assert.equal(result.farmer.email, 'newfarmer@example.com');
+  assert.ok(result.token);
+});
+
+test('authenticateGoogleAccount logs in existing user, verifies email, and preserves profile', async () => {
+  let updatedVerifiedAt = false;
+  let sessionCreated = false;
+
+  const client = {
+    async query(sql, values = []) {
+      if (sql === 'begin' || sql === 'commit' || sql === 'rollback') return { rows: [] };
+      if (sql.includes('select id, email, email_verified_at from app_users')) {
+        return { rows: [{ id: farmerRow.id, email: farmerRow.email, email_verified_at: null }] };
+      }
+      if (sql.includes('update app_users set email_verified_at')) {
+        updatedVerifiedAt = true;
+        return { rows: [], rowCount: 1 };
+      }
+      if (sql.includes('select * from farmers where id = $1')) {
+        return { rows: [farmerRow] };
+      }
+      if (sql.includes('insert into auth_sessions')) {
+        sessionCreated = true;
+        return { rows: [] };
+      }
+      return { rows: [] };
+    },
+    release() {}
+  };
+  const pool = { async connect() { return client; } };
+
+  const mockVerifier = async () => ({
+    googleId: 'google-sub-existing',
+    email: farmerRow.email,
+    name: 'Ravi'
+  });
+
+  const result = await authenticateGoogleAccount(pool, {
+    idToken: 'mock-valid-id-token',
+    customVerifier: mockVerifier
+  });
+
+  assert.equal(updatedVerifiedAt, true);
+  assert.equal(sessionCreated, true);
+  assert.equal(result.farmer._id, farmerRow.id);
+  assert.ok(result.token);
+});
+
+test('authenticateGoogleAccount rolls back and throws when database errors occur', async () => {
+  let rolledBack = false;
+  const client = {
+    async query(sql) {
+      if (sql === 'begin') return { rows: [] };
+      if (sql === 'rollback') {
+        rolledBack = true;
+        return { rows: [] };
+      }
+      if (sql.includes('select id, email')) throw new Error('Database connection failed');
+      return { rows: [] };
+    },
+    release() {}
+  };
+  const pool = { async connect() { return client; } };
+  const mockVerifier = async () => ({
+    googleId: 'google-1',
+    email: 'test@example.com',
+    name: 'Test'
+  });
+
+  await assert.rejects(
+    authenticateGoogleAccount(pool, { idToken: 'token', customVerifier: mockVerifier }),
+    { message: /Database connection failed/ }
+  );
+  assert.equal(rolledBack, true);
+});
+
+test('verifyGoogleIdToken verifies audience against configured client ID', async () => {
+  process.env.VITE_GOOGLE_CLIENT_ID = 'test-client-id-12345.apps.googleusercontent.com';
+  
+  const mockClient = {
+    async verifyIdToken({ idToken, audience }) {
+      assert.equal(idToken, 'valid-token');
+      assert.equal(audience, 'test-client-id-12345.apps.googleusercontent.com');
+      return {
+        getPayload: () => ({
+          aud: 'test-client-id-12345.apps.googleusercontent.com',
+          iss: 'accounts.google.com',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+          sub: 'sub-123',
+          email: 'verified@gmail.com',
+          email_verified: true,
+          name: 'Verified User'
+        })
+      };
+    }
+  };
+
+  const payload = await verifyGoogleIdToken('valid-token', mockClient);
+  assert.equal(payload.email, 'verified@gmail.com');
+  assert.equal(payload.name, 'Verified User');
+  assert.equal(payload.googleId, 'sub-123');
+});
+
+test('verifyGoogleIdToken rejects empty or invalid token parameter', async () => {
+  await assert.rejects(verifyGoogleIdToken(''), { status: 400 });
+  await assert.rejects(verifyGoogleIdToken(null), { status: 400 });
+});
+
+test('verifyGoogleIdToken rejects tokens with mismatched audience', async () => {
+  process.env.VITE_GOOGLE_CLIENT_ID = 'expected-client-id';
+
+  const mockClient = {
+    async verifyIdToken() {
+      return {
+        getPayload: () => ({
+          aud: 'different-client-id',
+          iss: 'accounts.google.com',
+          sub: 'sub-123',
+          email: 'user@example.com',
+          email_verified: true
+        })
+      };
+    }
+  };
+
+  await assert.rejects(verifyGoogleIdToken('token', mockClient), {
+    status: 401,
+    message: /audience does not match/
+  });
+});
+
+test('verifyGoogleIdToken rejects unverified Google email addresses', async () => {
+  process.env.VITE_GOOGLE_CLIENT_ID = 'test-client-id';
+
+  const mockClient = {
+    async verifyIdToken() {
+      return {
+        getPayload: () => ({
+          aud: 'test-client-id',
+          iss: 'https://accounts.google.com',
+          sub: 'sub-123',
+          email: 'unverified@example.com',
+          email_verified: false
+        })
+      };
+    }
+  };
+
+  await assert.rejects(verifyGoogleIdToken('token', mockClient), {
+    status: 403,
+    message: /must be verified/
+  });
+});
+
+test('verifyGoogleIdToken rejects invalid issuer', async () => {
+  process.env.VITE_GOOGLE_CLIENT_ID = 'test-client-id';
+
+  const mockClient = {
+    async verifyIdToken() {
+      return {
+        getPayload: () => ({
+          aud: 'test-client-id',
+          iss: 'malicious-issuer.com',
+          sub: 'sub-123',
+          email: 'user@example.com',
+          email_verified: true
+        })
+      };
+    }
+  };
+
+  await assert.rejects(verifyGoogleIdToken('token', mockClient), {
+    status: 401,
+    message: /issuer is invalid/
+  });
+});
+
+test('loadSession and deleteSession manage session lifecycle accurately', async () => {
+  const token = 'active-session-token';
+  const pool = {
+    async query(sql, values) {
+      if (sql.includes('from auth_sessions s')) {
+        assert.equal(values[0], hashSessionToken(token));
+        return { rows: [farmerRow] };
+      }
+      if (sql.includes('delete from auth_sessions')) {
+        assert.equal(values[0], hashSessionToken(token));
+        return { rowCount: 1 };
+      }
+      return { rows: [] };
+    }
+  };
+
+  const loaded = await loadSession(pool, token);
+  assert.equal(loaded._id, farmerRow.id);
+
+  // Expired or missing
+  const emptyPool = { async query() { return { rows: [] }; } };
+  assert.equal(await loadSession(emptyPool, 'missing-token'), null);
+
+  // Delete
+  await deleteSession(pool, token);
 });

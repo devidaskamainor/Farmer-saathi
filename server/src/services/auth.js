@@ -4,6 +4,7 @@ import { HttpError } from '../utils/http.js';
 import { createSessionToken, hashSessionToken, SESSION_DURATION_DAYS } from './authSessions.js';
 import { getFarmerById, mapFarmer } from './farmerProfiles.js';
 import { normalizeEmail, validateEmailAddress, validateSocialAccount } from './emailValidator.js';
+import { verifyGoogleIdToken } from './googleAuth.js';
 
 export { normalizeEmail, validateEmailAddress, validateSocialAccount };
 
@@ -220,7 +221,86 @@ export async function deleteSession(pool, token) {
   await pool.query('delete from auth_sessions where token_hash = $1', [hashSessionToken(token)]);
 }
 
-export async function authenticateSocialAccount(pool, { provider, email, name, preferredLanguage }) {
+export async function authenticateGoogleAccount(pool, { idToken, preferredLanguage, customVerifier }) {
+  if (!pool || typeof pool.connect !== 'function') {
+    throw new HttpError(503, 'PostgreSQL is not configured. Set DATABASE_URL on the server.');
+  }
+
+  const verifier = customVerifier || verifyGoogleIdToken;
+  const googleUser = await verifier(idToken);
+  const normalizedEmail = normalizeEmail(googleUser.email);
+  const safeName = (googleUser.name && typeof googleUser.name === 'string' && googleUser.name.trim())
+    ? googleUser.name.trim()
+    : normalizedEmail.split('@')[0];
+
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    const { rows: userRows } = await client.query(
+      'select id, email, email_verified_at from app_users where lower(email) = $1',
+      [normalizedEmail]
+    );
+
+    let userId;
+    let farmer;
+
+    if (userRows.length > 0) {
+      userId = userRows[0].id;
+      if (!userRows[0].email_verified_at) {
+        await client.query(
+          'update app_users set email_verified_at = now(), updated_at = now() where id = $1',
+          [userId]
+        );
+      }
+      farmer = await getFarmerById(client, userId);
+      if (!farmer) {
+        farmer = await insertFarmer(client, userId, normalizedEmail, {
+          name: safeName,
+          preferredLanguage: preferredLanguage || 'en',
+          village: '',
+          district: '',
+          state: '',
+          currentCrops: []
+        });
+      }
+    } else {
+      userId = randomUUID();
+      const dummyHash = await bcrypt.hash(randomBytes(32).toString('hex'), bcryptRounds);
+      await client.query(
+        'insert into app_users (id, email, password_hash, email_verified_at) values ($1, $2, $3, now())',
+        [userId, normalizedEmail, dummyHash]
+      );
+      farmer = await insertFarmer(client, userId, normalizedEmail, {
+        name: safeName,
+        preferredLanguage: preferredLanguage || 'en',
+        village: '',
+        district: '',
+        state: '',
+        currentCrops: []
+      });
+    }
+
+    const sessionToken = createSessionToken();
+    await insertSession(client, userId, sessionToken);
+    await client.query('commit');
+    return { token: sessionToken, farmer };
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function authenticateSocialAccount(pool, { provider, email, name, preferredLanguage, idToken, credential, customVerifier }) {
+  if (provider === 'google') {
+    const token = idToken || credential;
+    if (!token) {
+      throw new HttpError(400, 'A verified Google ID token is required for Google sign-in.');
+    }
+    return authenticateGoogleAccount(pool, { idToken: token, preferredLanguage, customVerifier });
+  }
+
   const normalizedEmail = validateSocialAccount(provider, { email });
   const client = await pool.connect();
   try {

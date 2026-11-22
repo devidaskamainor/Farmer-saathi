@@ -44,3 +44,15 @@ export async function closeDatabasePool() {
   pool = undefined;
   await activePool.end();
 }
+
+export function isDatabaseConnectionError(error) {
+  if (!error) return false;
+  const knownCodes = new Set(['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', '57P01', '57P02', '57P03', '53300']);
+  for (let current = error; current; current = current.cause) {
+    if (knownCodes.has(current.code) || (typeof current.code === 'string' && current.code.startsWith('08'))) return true;
+    if (typeof current.message === 'string' && /connection terminated due to connection timeout/i.test(current.message)) return true;
+    if (typeof current.message === 'string' && /PostgreSQL is not configured/i.test(current.message)) return true;
+  }
+  return false;
+}
+

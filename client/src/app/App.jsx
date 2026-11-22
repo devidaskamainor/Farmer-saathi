@@ -43,19 +43,58 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
+
     if (publicAuthPaths.has(location.pathname)) {
       setChecking(false);
       return () => { active = false; };
     }
-    setChecking(true);
-    api.get('/auth/session')
-      .then(({ data }) => {
+
+    async function initializeAuth() {
+      setChecking(true);
+
+      // 1. Check for incoming Google authentication redirect tokens (id_token or credential)
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash ? window.location.hash.substring(1) : '';
+        const search = window.location.search ? window.location.search.substring(1) : '';
+        const hashParams = new URLSearchParams(hash);
+        const searchParams = new URLSearchParams(search);
+
+        const idToken = hashParams.get('id_token') || hashParams.get('credential') ||
+                        searchParams.get('id_token') || searchParams.get('credential');
+
+        if (idToken) {
+          window.history.replaceState(null, '', window.location.pathname);
+          try {
+            const { data } = await api.post('/auth/google', {
+              idToken,
+              preferredLanguage: readSavedLanguage() || 'en'
+            });
+            if (!active) return;
+            onAuthenticated(data);
+            setChecking(false);
+            return;
+          } catch (err) {
+            if (!active) return;
+            setProfileError(errorMessage(err));
+            setAuthenticated(false);
+            setFarmer(null);
+            setChecking(false);
+            return;
+          }
+        }
+      }
+
+      // 2. No incoming Google token, check existing session (Bearer token / session cookie)
+      try {
+        const { data } = await api.get('/auth/session');
         if (!active) return;
         setAuthenticated(true);
         setFarmer(data.farmer);
+        if (data.token && typeof window !== 'undefined') {
+          localStorage.setItem('farmer_saathi_token', data.token);
+        }
         setProfileError('');
-      })
-      .catch(error => {
+      } catch (error) {
         if (!active) return;
         if (error.response?.status === 401 || error.response?.status === 403) {
           if (typeof window !== 'undefined') {
@@ -67,44 +106,19 @@ export default function App() {
         } else {
           setProfileError(errorMessage(error));
         }
-      })
-      .finally(() => { if (active) setChecking(false); });
+      } finally {
+        if (active) setChecking(false);
+      }
+    }
+
+    initializeAuth();
+
     return () => { active = false; };
   }, [location.pathname]);
 
   useEffect(() => {
     if (farmer?.preferredLanguage && supportedLanguages.has(farmer.preferredLanguage)) saveLanguage(farmer.preferredLanguage);
   }, [farmer?.preferredLanguage]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash.includes('access_token=')) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      if (accessToken) {
-        window.history.replaceState(null, '', window.location.pathname);
-        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        })
-          .then(res => res.json())
-          .then(googleUser => {
-            if (googleUser?.email) {
-              return api.post('/auth/social', {
-                provider: 'google',
-                email: googleUser.email,
-                name: googleUser.name || googleUser.given_name || googleUser.email.split('@')[0],
-                preferredLanguage: readSavedLanguage() || 'en'
-              });
-            }
-          })
-          .then(response => {
-            if (response?.data) onAuthenticated(response.data);
-          })
-          .catch(err => {
-            setProfileError(errorMessage(err));
-          });
-      }
-    }
-  }, []);
 
   const onAuthenticated = (data) => {
     if (data?.token && typeof window !== 'undefined') {
@@ -140,26 +154,6 @@ export default function App() {
       setFarmer(null);
     };
 
-    const handleContinueAsGuest = () => {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('farmer_saathi_token');
-      }
-      const guestFarmer = {
-        _id: 'guest-farmer',
-        name: 'Devidas Kamainor',
-        email: 'devdevudevidaskaminor@gmail.com',
-        preferredLanguage: readSavedLanguage() || 'kn',
-        state: 'Karnataka',
-        district: 'Hassan',
-        village: 'Nittur Buzurg',
-        farmSize: 5,
-        currentCrops: ['Sugarcane', 'Cotton']
-      };
-      setFarmer(guestFarmer);
-      setAuthenticated(true);
-      setProfileError('');
-    };
-
     return (
       <div className="error-screen">
         <ShieldCheck size={36} />
@@ -171,9 +165,6 @@ export default function App() {
           </button>
           <button className="subtle-button" onClick={handleResetSession}>
             Sign in again
-          </button>
-          <button className="subtle-button" onClick={handleContinueAsGuest}>
-            Continue as Demo Farmer
           </button>
         </div>
       </div>

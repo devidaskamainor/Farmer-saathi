@@ -4,7 +4,7 @@ import { getDatabasePool } from '../config/database.js';
 import { getClientUrl } from '../config/urls.js';
 import { requireAuth } from '../middleware/auth.js';
 import {
-  authenticateSocialAccount, createEmailVerification, createPasswordReset, deleteSession, loginAccount,
+  authenticateGoogleAccount, authenticateSocialAccount, createEmailVerification, createPasswordReset, deleteSession, loginAccount,
   registerAccount, resetPassword, validateEmailAddress, verifyEmail
 } from '../services/auth.js';
 import { generateFarmerJwt } from '../services/jwt.js';
@@ -37,7 +37,8 @@ router.post('/register', async (req, res, next) => {
     const body = req.body || {};
     const profile = validateProfile(body);
     assertVerificationEmailConfigured();
-    const account = await registerAccount(getDatabasePool(), {
+    const pool = getDatabasePool();
+    const account = await registerAccount(pool, {
       email: body.email,
       password: body.password,
       profile
@@ -49,68 +50,46 @@ router.post('/register', async (req, res, next) => {
 
 router.post('/login', async (req, res, next) => {
   try {
-    try {
-      const account = await loginAccount(getDatabasePool(), req.body || {});
-      setSessionCookie(res, account.token);
-      return res.json({ farmer: account.farmer, token: generateFarmerJwt(account.farmer) });
-    } catch (loginErr) {
-      if (loginErr instanceof HttpError) throw loginErr;
-      console.warn('Database error during login, creating resilient session:', loginErr.message);
-      if (req.body?.email) {
-        const fallbackFarmer = {
-          _id: 'local-farmer-id',
-          name: req.body.email.split('@')[0],
-          email: req.body.email,
-          preferredLanguage: 'en',
-          state: 'Karnataka',
-          district: 'Hassan',
-          village: 'Nittur',
-          farmSize: 5,
-          currentCrops: ['Sugarcane', 'Cotton']
-        };
-        const token = generateFarmerJwt(fallbackFarmer);
-        setSessionCookie(res, token);
-        return res.json({ farmer: fallbackFarmer, token });
-      }
-      throw loginErr;
+    const account = await loginAccount(getDatabasePool(), req.body || {});
+    setSessionCookie(res, account.token);
+    return res.json({ farmer: account.farmer, token: generateFarmerJwt(account.farmer) });
+  } catch (error) { next(error); }
+});
+
+router.post('/google', async (req, res, next) => {
+  try {
+    const { idToken, credential, token, preferredLanguage } = req.body || {};
+    const effectiveToken = idToken || credential || token;
+    if (!effectiveToken || typeof effectiveToken !== 'string' || !effectiveToken.trim()) {
+      throw new HttpError(400, 'A valid Google ID token is required.');
     }
+    const result = await authenticateGoogleAccount(getDatabasePool(), {
+      idToken: effectiveToken,
+      preferredLanguage
+    });
+    setSessionCookie(res, result.token);
+    return res.json({ farmer: result.farmer, token: generateFarmerJwt(result.farmer) });
   } catch (error) { next(error); }
 });
 
 router.post(['/social', '/social-login'], async (req, res, next) => {
   try {
-    const { provider, email, name, preferredLanguage, account } = req.body || {};
+    const { provider, email, name, preferredLanguage, account, idToken, credential, token } = req.body || {};
+    const effectiveToken = idToken || credential || token || account?.idToken || account?.credential;
+    if (provider === 'google' && !effectiveToken) {
+      throw new HttpError(400, 'A verified Google ID token is required for Google sign-in.');
+    }
     const effectiveEmail = email || account?.email;
     const effectiveName = name || account?.name;
-    try {
-      const result = await authenticateSocialAccount(getDatabasePool(), {
-        provider,
-        email: effectiveEmail,
-        name: effectiveName,
-        preferredLanguage
-      });
-      setSessionCookie(res, result.token);
-      return res.json({ farmer: result.farmer, token: generateFarmerJwt(result.farmer) });
-    } catch (dbError) {
-      console.warn('Database unavailable during social login, generating resilient fallback session:', dbError.message);
-      const fallbackFarmer = {
-        _id: 'social-farmer-id',
-        name: effectiveName || 'Devidas Kamainor',
-        email: effectiveEmail || 'devdevudevidaskaminor@gmail.com',
-        preferredLanguage: preferredLanguage || 'en',
-        state: 'Karnataka',
-        district: 'Hassan',
-        village: 'Nittur',
-        farmSize: 5,
-        currentCrops: ['Sugarcane', 'Cotton'],
-        soil: {},
-        farmPlan: {},
-        irrigationFacilities: []
-      };
-      const token = generateFarmerJwt(fallbackFarmer);
-      setSessionCookie(res, token);
-      return res.json({ farmer: fallbackFarmer, token });
-    }
+    const result = await authenticateSocialAccount(getDatabasePool(), {
+      provider,
+      email: effectiveEmail,
+      name: effectiveName,
+      preferredLanguage,
+      idToken: effectiveToken
+    });
+    setSessionCookie(res, result.token);
+    return res.json({ farmer: result.farmer, token: generateFarmerJwt(result.farmer) });
   } catch (error) { next(error); }
 });
 
@@ -181,7 +160,14 @@ router.post('/verify', async (req, res, next) => {
 
 router.post('/logout', async (req, res, next) => {
   try {
-    await deleteSession(getDatabasePool(), parseSessionCookie(req.headers.cookie));
+    const token = parseSessionCookie(req.headers.cookie);
+    if (token) {
+      try {
+        await deleteSession(getDatabasePool(), token);
+      } catch {
+        // Clear session cookie even if database cannot be reached
+      }
+    }
     clearSessionCookie(res);
     res.status(204).end();
   } catch (error) { next(error); }

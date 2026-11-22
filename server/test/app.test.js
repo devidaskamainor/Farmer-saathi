@@ -3,6 +3,10 @@ import test, { after, before } from 'node:test';
 
 process.env.CLIENT_ORIGIN = 'http://farmer-saathi.test';
 process.env.CLIENT_URL = 'http://farmer-saathi.test';
+process.env.SMTP_HOST = 'smtp.farmer-saathi.test';
+process.env.SMTP_USER = 'mailer@farmer-saathi.test';
+process.env.SMTP_PASSWORD = 'test-smtp-password';
+process.env.SMTP_FROM = 'no-reply@farmer-saathi.test';
 
 const { default: app } = await import('../src/app.js');
 process.env.DATABASE_URL = '';
@@ -189,3 +193,73 @@ test('local Vite network origins are rejected in production', async () => {
     else process.env.NODE_ENV = previousNodeEnv;
   }
 });
+
+test('GET /api/auth/session returns 401 when no session cookie or bearer token is provided', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/session`);
+  assert.equal(response.status, 401);
+  const data = await response.json();
+  assert.equal(data.message, 'Please sign in to continue.');
+});
+
+test('GET /api/auth/session rejects invalid bearer tokens with 401', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/session`, {
+    headers: { Authorization: 'Bearer invalid.token.value' }
+  });
+  assert.equal(response.status, 401);
+  const data = await response.json();
+  assert.match(data.message, /invalid or has expired/);
+});
+
+test('POST /api/auth/google rejects missing or empty Google ID token', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/google`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({})
+  });
+  assert.equal(response.status, 400);
+  const data = await response.json();
+  assert.match(data.message, /valid Google ID token/);
+});
+
+test('POST /api/auth/login does NOT create fallback resilient session when database fails', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'attacker@example.test', password: 'any-password' })
+  });
+  // Since DATABASE_URL is not configured, it must return 503 database unavailable, NOT 200 with fake farmer!
+  assert.equal(response.status, 503);
+  const data = await response.json();
+  assert.match(data.message, /database is temporarily unavailable|DATABASE_URL/i);
+});
+
+test('POST /api/auth/social for google rejects request without ID token', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/social`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ provider: 'google', email: 'unverified@gmail.com', name: 'Fake Google' })
+  });
+  assert.equal(response.status, 400);
+  const data = await response.json();
+  assert.match(data.message, /verified Google ID token is required/);
+});
+
+test('POST /api/auth/logout clears the session cookie and returns 204', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/logout`, {
+    method: 'POST',
+    headers: { Cookie: 'farmer_saathi_session=some_session_token' }
+  });
+  assert.equal(response.status, 204);
+  const setCookie = response.headers.get('set-cookie');
+  assert.ok(setCookie);
+  assert.match(setCookie, /farmer_saathi_session=;/);
+  assert.match(setCookie, /Max-Age=0/i);
+});
+
+test('Content-Security-Policy header includes Google Identity Services directives', async () => {
+  const response = await fetch(`${baseUrl}/api/health`);
+  const csp = response.headers.get('content-security-policy') || '';
+  assert.ok(csp.includes('https://accounts.google.com/gsi/client'), 'CSP must allow GSI script');
+  assert.ok(csp.includes('https://accounts.google.com/gsi/'), 'CSP must allow GSI connect/frame');
+});
+

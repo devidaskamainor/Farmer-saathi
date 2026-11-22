@@ -4,7 +4,17 @@ const DEFAULT_SECRET = 'farmer-saathi-jwt-development-secret-key-change-in-produ
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '14d';
 
 export function getJwtSecret() {
-  return process.env.JWT_SECRET || DEFAULT_SECRET;
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET must be configured with at least 32 characters in production.');
+    }
+    return DEFAULT_SECRET;
+  }
+  if (process.env.NODE_ENV === 'production' && secret === DEFAULT_SECRET) {
+    throw new Error('JWT_SECRET must not use the default development secret in production.');
+  }
+  return secret;
 }
 
 export function signJwt(payload, options = {}) {

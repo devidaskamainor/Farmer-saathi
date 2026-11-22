@@ -1,4 +1,4 @@
-import { getDatabasePool } from '../config/database.js';
+import { getDatabasePool, isDatabaseConnectionError } from '../config/database.js';
 import { loadSession } from '../services/auth.js';
 import { getFarmerById } from '../services/farmerProfiles.js';
 import { parseSessionCookie } from '../services/authSessions.js';
@@ -21,28 +21,11 @@ export async function requireAuth(req, res, next) {
           return next();
         }
       } catch (dbError) {
+        if (isDatabaseConnectionError(dbError)) {
+          return res.status(503).json({ message: 'The database is temporarily unavailable. Please try again.' });
+        }
         console.warn('Database error while loading farmer for token:', dbError.message);
-      }
-
-      // If JWT signature is valid and has user details, synthesize resilient fallback farmer
-      if (payload.sub && payload.email) {
-        const fallbackFarmer = {
-          _id: payload.sub,
-          name: payload.name || payload.email.split('@')[0],
-          email: payload.email,
-          state: payload.state || 'Karnataka',
-          district: payload.district || 'Hassan',
-          village: payload.village || 'Nittur',
-          preferredLanguage: payload.preferredLanguage || 'en',
-          farmSize: payload.farmSize || 5,
-          currentCrops: payload.currentCrops || ['Sugarcane', 'Cotton'],
-          soil: {},
-          farmPlan: {},
-          irrigationFacilities: []
-        };
-        req.authUser = { id: fallbackFarmer._id, email: fallbackFarmer.email };
-        req.farmer = fallbackFarmer;
-        return next();
+        return res.status(503).json({ message: 'The database is temporarily unavailable. Please try again.' });
       }
 
       return res.status(401).json({ message: 'The account for this token was not found. Please sign in again.' });
@@ -63,27 +46,11 @@ export async function requireAuth(req, res, next) {
           return next();
         }
       } catch (dbError) {
+        if (isDatabaseConnectionError(dbError)) {
+          return res.status(503).json({ message: 'The database is temporarily unavailable. Please try again.' });
+        }
         console.warn('Database error while loading farmer for cookie JWT:', dbError.message);
-      }
-
-      if (jwtPayload.sub && jwtPayload.email) {
-        const fallbackFarmer = {
-          _id: jwtPayload.sub,
-          name: jwtPayload.name || jwtPayload.email.split('@')[0],
-          email: jwtPayload.email,
-          state: jwtPayload.state || 'Karnataka',
-          district: jwtPayload.district || 'Hassan',
-          village: jwtPayload.village || 'Nittur',
-          preferredLanguage: jwtPayload.preferredLanguage || 'en',
-          farmSize: 5,
-          currentCrops: ['Sugarcane', 'Cotton'],
-          soil: {},
-          farmPlan: {},
-          irrigationFacilities: []
-        };
-        req.authUser = { id: fallbackFarmer._id, email: fallbackFarmer.email };
-        req.farmer = fallbackFarmer;
-        return next();
+        return res.status(503).json({ message: 'The database is temporarily unavailable. Please try again.' });
       }
     }
 
@@ -93,8 +60,11 @@ export async function requireAuth(req, res, next) {
       if (!farmer) return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
       req.authUser = { id: farmer._id, email: farmer.email };
       req.farmer = farmer;
-      next();
+      return next();
     } catch (dbError) {
+      if (isDatabaseConnectionError(dbError)) {
+        return res.status(503).json({ message: 'The database is temporarily unavailable. Please try again.' });
+      }
       console.warn('Database error while loading session token:', dbError.message);
       return res.status(401).json({ message: 'Session could not be verified. Please sign in again.' });
     }
@@ -117,22 +87,6 @@ export async function optionalAuth(req, _res, next) {
             return next();
           }
         } catch {}
-        if (payload.email) {
-          const fallbackFarmer = {
-            _id: payload.sub,
-            name: payload.name || payload.email.split('@')[0],
-            email: payload.email,
-            state: payload.state || 'Karnataka',
-            district: payload.district || 'Hassan',
-            village: payload.village || 'Nittur',
-            preferredLanguage: payload.preferredLanguage || 'en',
-            farmSize: 5,
-            currentCrops: ['Sugarcane']
-          };
-          req.authUser = { id: fallbackFarmer._id, email: fallbackFarmer.email };
-          req.farmer = fallbackFarmer;
-          return next();
-        }
       }
     }
     const token = parseSessionCookie(req.headers.cookie);
@@ -147,22 +101,6 @@ export async function optionalAuth(req, _res, next) {
             return next();
           }
         } catch {}
-        if (jwtPayload.email) {
-          const fallbackFarmer = {
-            _id: jwtPayload.sub,
-            name: jwtPayload.name || jwtPayload.email.split('@')[0],
-            email: jwtPayload.email,
-            state: 'Karnataka',
-            district: 'Hassan',
-            village: 'Nittur',
-            preferredLanguage: 'en',
-            farmSize: 5,
-            currentCrops: ['Sugarcane']
-          };
-          req.authUser = { id: fallbackFarmer._id, email: fallbackFarmer.email };
-          req.farmer = fallbackFarmer;
-          return next();
-        }
       }
       try {
         const farmer = await loadSession(getDatabasePool(), token);
