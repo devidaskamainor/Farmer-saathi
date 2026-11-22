@@ -5,6 +5,7 @@ import { getMandiPrices } from '../services/mandi.js';
 import { getWeather } from '../services/weather.js';
 import { detectIntent } from '../services/intent.js';
 import { potentiallyRelevantSchemes } from '../services/schemes.js';
+import { getLanguageDefinition } from '../config/languages.js';
 import { HttpError } from '../utils/http.js';
 
 const router = Router();
@@ -60,6 +61,26 @@ router.post(['/ask', '/chat'], async (req, res, next) => {
       const schemeAnswer = await localizeAssistantText(req.farmer, localizedSchemeAnswer(req.farmer));
       return res.json({ intent, answer: schemeAnswer, source: 'Verified scheme catalogue', generatedAt: new Date().toISOString(), action: 'open_schemes' });
     }
+
+    if (intent === 'TRANSLATION_QUERY') {
+      const targetLang = detectTargetLanguage(message, req.body?.language || req.farmer.preferredLanguage || 'kn');
+      const textToTranslate = previousAssistant?.text || message;
+      const targetFarmer = { ...req.farmer, preferredLanguage: targetLang };
+      const langDef = getLanguageDefinition(targetLang);
+      const prompt = `Translate the following farming guidance accurately and naturally into ${langDef.englishName} (${langDef.nativeName}) script. Keep all crop guidance, steps, numbers, measurements, and advice exact. Do not add outside commentary or answer in English.\n\nGuidance to translate:\n${textToTranslate}`;
+      const result = await askGroq({
+        farmer: targetFarmer,
+        task: `Translate advice into ${langDef.englishName}`,
+        prompt
+      });
+      return res.json({
+        ...result,
+        intent,
+        language: targetLang,
+        source: `Groq AI (${langDef.englishName})`
+      });
+    }
+
     if (intent === 'UNKNOWN_INTENT') {
       return res.json({ intent, answer: await localizeAssistantText(req.farmer, localizedUnknownPrompt(req.farmer.preferredLanguage)), source: 'Clarification needed', generatedAt: new Date().toISOString() });
     }
@@ -195,6 +216,24 @@ function localizedCommodityPrompt(language) {
     hi: 'आप किस फसल का मंडी भाव जानना चाहते हैं? कृपया फसल का नाम लिखें, जैसे टमाटर, प्याज, धान या कपास।',
     kn: 'ಯಾವ ಬೆಳೆಯ ಮಾರುಕಟ್ಟೆ ಬೆಲೆ ಬೇಕು? ಟೊಮೇಟೊ, ಈರುಳ್ಳಿ, ಅಕ್ಕಿ ಅಥವಾ ಹತ್ತಿ ಎಂಬಂತೆ ಬೆಳೆಯ ಹೆಸರನ್ನು ಬರೆಯಿರಿ.'
   })[language] || 'Which crop’s mandi price would you like? Please include its name.';
+}
+
+function detectTargetLanguage(message, defaultLang = 'kn') {
+  const text = String(message || '').toLowerCase();
+  if (/kannada|ಕನ್ನಡ|कन्नड़|कन्नड/.test(text)) return 'kn';
+  if (/hindi|हिंदी|हिन्दी/.test(text)) return 'hi';
+  if (/tamil|தமிழ்|तमिल/.test(text)) return 'ta';
+  if (/telugu|తెలుగు|तेलुगु/.test(text)) return 'te';
+  if (/marathi|मराठी/.test(text)) return 'mr';
+  if (/bengali|বাংলা|बंगाली/.test(text)) return 'bn';
+  if (/gujarati|ગુજરાતી|गुजराती/.test(text)) return 'gu';
+  if (/punjabi|ਪੰਜਾਬੀ|पंजाबी/.test(text)) return 'pa';
+  if (/malayalam|മലയാളം|मलयालम/.test(text)) return 'ml';
+  if (/odia|oriya|ଓଡ଼ିଆ|उड़िया/.test(text)) return 'or';
+  if (/assamese|অসমীয়া|असमिया/.test(text)) return 'as';
+  if (/urdu|اردو|उर्दू/.test(text)) return 'ur';
+  if (/english|अंग्रेजी|ಇಂಗ್ಲಿಷ್/.test(text)) return 'en';
+  return defaultLang;
 }
 
 export default router;

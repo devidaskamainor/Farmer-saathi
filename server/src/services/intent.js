@@ -1,4 +1,5 @@
 const intentRules = [
+  ['TRANSLATION_QUERY', /\b(translat\w*|tell\s+(?:me\s+)?in|say\s+in|speak\s+in|explain\s+in|in\s+(?:kannada|hindi|tamil|telugu|marathi|bengali|gujarati|punjabi|malayalam|odia|assamese|urdu|english))\b|ಅನುವಾದ|ಕನ್ನಡದಲ್ಲಿ|ಹಿಂದಿಯಲ್ಲಿ|ತಮಿಳಿನಲ್ಲಿ|ತೆಲುಗಿನಲ್ಲಿ|मराठीत|अनुवाद|हिंदी में|कन्नड़ में|कन्नड में|तमिल में|तेलुगु में|मराठी में|বাংলায়|ગુજરાતીમાં|ਪੰਜਾਬੀ ਵਿੱਚ|മലയാളത്തിൽ|ଓଡ଼ିଆରେ/i],
   ['WEATHER_QUERY', /\b(weather|forecast|rain|raining|temperature|humidity|tomorrow rain)\b|मौसम|बारिश|बरसात|वर्षा|तापमान|ಹವಾಮಾನ|ಮಳೆ|ಮಳೆಯ|ಮುನ್ಸೂಚನೆ/i],
   ['MANDI_PRICE', /\b(mandi|market price|price|prices|selling price)\b|मंडी|भाव|कीमत|बाज़ार|बाजार भाव|मंडी भाव|ಬೆಲೆ|ಮಾರುಕಟ್ಟೆ|ಮಂಡಿ/i],
   ['GOVERNMENT_SCHEME', /\b(schemes?|government benefits?|farmer benefits?)\b|योजना|योजनाओं|सरकारी योजना|सरकारी योजनाएं|लाभ|ಯೋಜನೆ|ಯೋಜನೆಗಳು|ಸರ್ಕಾರಿ/i],

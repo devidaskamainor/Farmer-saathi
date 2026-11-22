@@ -120,6 +120,11 @@ export function detectSpeechLanguage(text, defaultLang = 'en') {
   if (/[\u0900-\u097F]/.test(text)) return defaultLang === 'mr' ? 'mr' : 'hi'; // Devanagari: Marathi / Hindi
   if (/[\u0600-\u06FF\u0750-\u08FF]/.test(text)) return defaultLang === 'ks' ? 'ks' : 'ur'; // Arabic script: Kashmiri / Urdu
 
+  // If text is purely in English without Indic characters, speak using English voice
+  if (/[A-Za-z]/.test(text) && !/[\u0900-\u0D7F\u0600-\u08FF]/.test(text)) {
+    return 'en';
+  }
+
   return defaultLang;
 }
 
