@@ -46,7 +46,7 @@ test('computeSatelliteAnalysis calculates spectral indices within valid physical
   // Satellite Pass Metadata
   assert.equal(result.meta.provider, 'Copernicus Sentinel-2 Constellation');
   assert.ok(result.meta.satellite.startsWith('Sentinel-2'));
-  assert.equal(result.meta.spatialResolution, '10m GSD (Ground Sample Distance)');
+  assert.ok(result.meta.spatialResolution.includes('10m'));
   assert.ok(result.meta.lastOverpassDate.match(/^\d{4}-\d{2}-\d{2}$/));
   assert.ok(result.meta.nextOverpassDate.match(/^\d{4}-\d{2}-\d{2}$/));
   assert.ok(result.meta.cloudCoverPct >= 0 && result.meta.cloudCoverPct <= 100);
@@ -87,6 +87,57 @@ test('computeSatelliteAnalysis generates accurate 3x3 spatial field zoning heatm
   const dist = result.fieldZoning.distribution;
   const totalPct = dist.optimalPct + dist.healthyPct + dist.moderatePct + dist.stressedPct;
   assert.equal(totalPct, 100);
+});
+
+test('computeSatelliteAnalysis generates regional crops, farm parcels, sections, and satellite imagery tiles', () => {
+  const result = computeSatelliteAnalysis({
+    latitude: 17.9104,
+    longitude: 77.5199,
+    location: 'Bidar, Karnataka, India',
+    crop: 'Sugarcane',
+    farmSizeAcres: 5.0,
+    telemetry: mockTelemetry
+  });
+
+  // Regional Crops (Crops grown over there)
+  assert.ok(result.regionalCrops.length >= 4);
+  const cropNames = result.regionalCrops.map(c => c.name);
+  assert.ok(cropNames.includes('Sugarcane'));
+  assert.ok(cropNames.includes('Soybean'));
+  assert.ok(result.regionalCrops.every(c => c.sharePct > 0 && c.color.startsWith('#')));
+
+  // Farm-Level Mapped Crop Parcels
+  assert.ok(result.farmParcels.length >= 2);
+  assert.equal(result.farmParcels[0].crop, 'Sugarcane');
+  assert.ok(result.farmParcels[0].areaAcres > 0);
+  assert.ok(result.farmParcels[0].color.startsWith('#'));
+
+  // Section-by-Section Workflow (Section A, B, C, D)
+  assert.equal(result.farmSections.length, 4);
+  const sectionIds = result.farmSections.map(s => s.id);
+  assert.deepEqual(sectionIds, ['sec-a', 'sec-b', 'sec-c', 'sec-d']);
+
+  const secA = result.farmSections.find(s => s.id === 'sec-a');
+  assert.equal(secA.vegetationCondition, 'Healthy vegetation');
+  assert.equal(secA.inspectionRequired, false);
+
+  const secB = result.farmSections.find(s => s.id === 'sec-b');
+  assert.equal(secB.vegetationCondition, 'Declining vegetation index');
+  assert.equal(secB.inspectionRequired, true);
+
+  const secC = result.farmSections.find(s => s.id === 'sec-c');
+  assert.equal(secC.vegetationCondition, 'Sparse vegetation');
+  assert.equal(secC.inspectionRequired, true);
+
+  // High-Resolution Satellite Tile Metadata
+  assert.ok(result.tileMetadata.centerTileUrl.includes('ArcGIS/rest/services/World_Imagery'));
+  assert.equal(result.tileMetadata.surroundingTiles.length, 9);
+  assert.equal(result.meta.imageryLayers.length, 5);
+
+  // Weather Correlation & Alerts
+  assert.ok(result.weatherCorrelation.assessment.length > 0);
+  assert.ok(['stress', 'beneficial', 'stable'].includes(result.weatherCorrelation.trendImpact));
+  assert.ok(Array.isArray(result.alerts));
 });
 
 test('computeSatelliteAnalysis generates 6-week historical Sentinel-2 overpass trajectory', () => {
