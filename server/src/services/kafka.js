@@ -16,7 +16,8 @@ const isKafkaEnabled = process.env.KAFKA_ENABLED !== 'false';
 
 let kafkaInstance = null;
 let kafkaProducer = null;
-let connectionAttempted = false;
+let lastConnectionAttempt = 0;
+const RECONNECT_COOLDOWN_MS = 10000;
 let isConnected = false;
 
 // In-memory fallback queue for zero-downtime offline resilience
@@ -41,10 +42,12 @@ function getKafkaClient() {
 async function getProducer() {
   if (!isKafkaEnabled) return null;
   if (kafkaProducer && isConnected) return kafkaProducer;
-  if (connectionAttempted && !isConnected) return null;
+  if (!isConnected && Date.now() - lastConnectionAttempt < RECONNECT_COOLDOWN_MS) {
+    return null;
+  }
 
   try {
-    connectionAttempted = true;
+    lastConnectionAttempt = Date.now();
     const client = getKafkaClient();
     const producer = client.producer({
       allowAutoTopicCreation: true
@@ -61,6 +64,7 @@ async function getProducer() {
     return kafkaProducer;
   } catch {
     isConnected = false;
+    kafkaProducer = null;
     return null;
   }
 }

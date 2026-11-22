@@ -26,8 +26,14 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
-  # PostgreSQL Database
+  # High-Concurrency Tuned PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: farmer-saathi-db
@@ -38,6 +44,12 @@ services:
       POSTGRES_USER: farmer_admin
       POSTGRES_PASSWORD: farmer_secure_password
       POSTGRES_DB: farmer_saathi
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c work_mem=16MB
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -46,17 +58,18 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache
+  # Redis In-Memory Cache (LRU eviction policy)
   redis:
     image: redis:7-alpine
     container_name: farmer-saathi-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save ""
     volumes:
       - redis_data:/data
 
-  # Apache Kafka (KRaft mode, no Zookeeper required)
+  # Apache Kafka Event Queue (KRaft Mode, Multi-Partitioned)
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: farmer-saathi-kafka
@@ -69,6 +82,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_NUM_PARTITIONS: 3
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1

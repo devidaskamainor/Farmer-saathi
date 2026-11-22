@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: farmer-saathi-pdb
+  labels:
+    app: farmer-saathi
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: farmer-saathi
