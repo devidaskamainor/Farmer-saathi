@@ -4,7 +4,7 @@
 export const words = {
   en: {
     overview: 'Overview', weather: 'Weather', markets: 'Mandi prices', crops: 'Crop advice',
-    assistant: 'Ask Saathi', irrigation: 'Irrigation', disease: 'Crop health', profile: 'My farm',
+    assistant: 'Ask Saathi', irrigation: 'Irrigation', disease: 'Crop health', profile: 'My farm', satellite: 'Satellite',
     welcome: 'Good day', dashboard: 'Your farm at a glance', forecast: 'Weather outlook', market: 'Market watch',
     recommendations: 'Crop recommendations', quickAsk: 'Ask a farming question', location: 'Add your farm location',
     language: 'Language', save: 'Save changes', loading: 'Loading…', noData: 'No data available yet',
@@ -13,7 +13,7 @@ export const words = {
   },
   kn: {
     overview: 'ಮುಖ್ಯ ಪುಟ', weather: 'ಹವಾಮಾನ', markets: 'ಮಾರುಕಟ್ಟೆ ಬೆಲೆ', crops: 'ಬೆಳೆ ಸಲಹೆ',
-    assistant: 'ಸಾಥಿಗೆ ಕೇಳಿ', irrigation: 'ನೀರಾವರಿ', disease: 'ಬೆಳೆ ಆರೋಗ್ಯ', profile: 'ನನ್ನ ಹೊಲ',
+    assistant: 'ಸಾಥಿಗೆ ಕೇಳಿ', irrigation: 'ನೀರಾವರಿ', disease: 'ಬೆಳೆ ಆರೋಗ್ಯ', profile: 'ನನ್ನ ಹೊಲ', satellite: 'ಉಪಗ್ರಹ ಕಣ್ಗಾವಲು',
     welcome: 'ನಮಸ್ಕಾರ', dashboard: 'ನಿಮ್ಮ ಹೊಲದ ಮಾಹಿತಿ', forecast: 'ಹವಾಮಾನ ಮುನ್ಸೂಚನೆ', market: 'ಮಾರುಕಟ್ಟೆ ಮಾಹಿತಿ',
     recommendations: 'ಬೆಳೆ ಶಿಫಾರಸುಗಳು', quickAsk: 'ಕೃಷಿ ಪ್ರಶ್ನೆ ಕೇಳಿ', location: 'ನಿಮ್ಮ ಹೊಲದ ಸ್ಥಳ ಸೇರಿಸಿ',
     language: 'ಭಾಷೆ', save: 'ಬದಲಾವಣೆ ಉಳಿಸಿ', loading: 'ಲೋಡ್ ಆಗುತ್ತಿದೆ…', noData: 'ಇನ್ನೂ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ',
@@ -22,7 +22,7 @@ export const words = {
   },
   hi: {
     overview: 'मुख्य पृष्ठ', weather: 'मौसम', markets: 'मंडी भाव', crops: 'फसल सलाह',
-    assistant: 'साथी से पूछें', irrigation: 'सिंचाई', disease: 'फसल स्वास्थ्य', profile: 'मेरा खेत',
+    assistant: 'साथी से पूछें', irrigation: 'सिंचाई', disease: 'फसल स्वास्थ्य', profile: 'मेरा खेत', satellite: 'उपग्रह निगरानी',
     welcome: 'नमस्कार', dashboard: 'आपके खेत की जानकारी', forecast: 'मौसम पूर्वानुमान', market: 'बाज़ार भाव',
     recommendations: 'फसल सुझाव', quickAsk: 'खेती का सवाल पूछें', location: 'अपने खेत का स्थान जोड़ें',
     language: 'भाषा', save: 'बदलाव सहेजें', loading: 'लोड हो रहा है…', noData: 'अभी कोई जानकारी उपलब्ध नहीं',
@@ -31,7 +31,7 @@ export const words = {
   },
   ta: {
     overview: 'முகப்பு', weather: 'வானிலை', markets: 'சந்தை விலைகள்', crops: 'பயிர் ஆலோசனை',
-    assistant: 'சாதியிடம் கேளுங்கள்', irrigation: 'நீர்ப்பாசனம்', disease: 'பயிர் நலம்', profile: 'என் பண்ணை',
+    assistant: 'சாதியிடம் கேளுங்கள்', irrigation: 'நீர்ப்பாசனம்', disease: 'பயிர் நலம்', profile: 'என் பண்ணை', satellite: 'செயற்கைக்கோள்',
     welcome: 'வணக்கம்', dashboard: 'உங்கள் பண்ணை விவரம்', forecast: 'வானிலை முன்னறிவிப்பு', market: 'சந்தை நிலவரம்',
     recommendations: 'பயிர் பரிந்துரைகள்', quickAsk: 'விவசாய கேள்வி கேளுங்கள்', location: 'பண்ணை இருப்பிடத்தை சேர்க்கவும்',
     language: 'மொழி', save: 'மாற்றங்களைச் சேமிக்கவும்', loading: 'ஏற்றுகிறது…', noData: 'தகவல் இன்னும் கிடைக்கவில்லை',
@@ -40,7 +40,7 @@ export const words = {
   },
   te: {
     overview: 'ప్రధాన పేజీ', weather: 'వాతావరణం', markets: 'మార్కెట్ ధరలు', crops: 'పంట సలహా',
-    assistant: 'సాథీని అడగండి', irrigation: 'నీటిపారుదల', disease: 'పంట ఆరోగ్యం', profile: 'నా పొలం',
+    assistant: 'సాథీని అడగండి', irrigation: 'నీటిపారుదల', disease: 'పంట ఆరోగ్యం', profile: 'నా పొలం', satellite: 'ఉపగ్రహ పర్యవేక్షణ',
     welcome: 'నమస్కారం', dashboard: 'మీ పొలం సమాచారం', forecast: 'వాతావరణ అంచనా', market: 'మార్కెట్ సమాచారం',
     recommendations: 'పంట సిఫార్సులు', quickAsk: 'వ్యవసాయ ప్రశ్న అడగండి', location: 'మీ పొలం ప్రాంతం చేర్చండి',
     language: 'భాష', save: 'మార్పులను సేవ్ చేయండి', loading: 'లోడ్ అవుతోంది…', noData: 'సమాచారం ఇంకా అందుబాటులో లేదు',
@@ -49,7 +49,7 @@ export const words = {
   },
   mr: {
     overview: 'मुख्य पृष्ठ', weather: 'हवामान', markets: 'बाजार भाव', crops: 'पीक सल्ला',
-    assistant: 'साथीला विचारा', irrigation: 'सिंचन', disease: 'पीक आरोग्य', profile: 'माझे शेत',
+    assistant: 'साथीला विचारा', irrigation: 'सिंचन', disease: 'पीक आरोग्य', profile: 'माझे शेत', satellite: 'उपग्रह निरीक्षण',
     welcome: 'नमस्कार', dashboard: 'तुमच्या शेताची माहिती', forecast: 'हवामान अंदाज', market: 'बाजार माहिती',
     recommendations: 'पीक शिफारसी', quickAsk: 'शेतीचा प्रश्न विचारा', location: 'शेताचे ठिकाण जोडा',
     language: 'भाषा', save: 'बदल जतन करा', loading: 'लोड होत आहे…', noData: 'अजून माहिती उपलब्ध नाही',
@@ -58,7 +58,7 @@ export const words = {
   },
   bn: {
     overview: 'প্রধান পাতা', weather: 'আবহাওয়া', markets: 'বাজার দর', crops: 'ফসল পরামর্শ',
-    assistant: 'সাথীকে জিজ্ঞাসা করুন', irrigation: 'সেচ', disease: 'ফসলের স্বাস্থ্য', profile: 'আমার খামার',
+    assistant: 'সাথীকে জিজ্ঞাসা করুন', irrigation: 'সেচ', disease: 'ফসলের স্বাস্থ্য', profile: 'আমার খামার', satellite: 'উপগ্রহ পর্যবেক্ষণ',
     welcome: 'নমস্কার', dashboard: 'আপনার খামারের তথ্য', forecast: 'আবহাওয়ার পূর্বাভাস', market: 'বাজার তথ্য',
     recommendations: 'ফসল সুপারিশ', quickAsk: 'কৃষি প্রশ্ন জিজ্ঞাসা করুন', location: 'খামারের অবস্থান যোগ করুন',
     language: 'ভাষা', save: 'পরিবর্তন সংরক্ষণ করুন', loading: 'লোড হচ্ছে…', noData: 'এখনও কোনো তথ্য নেই',
@@ -67,7 +67,7 @@ export const words = {
   },
   gu: {
     overview: 'મુખ્ય પૃષ્ઠ', weather: 'હવામાન', markets: 'બજાર ભાવ', crops: 'પાક સલાહ',
-    assistant: 'સાથીને પૂછો', irrigation: 'સિંચાઈ', disease: 'પાક સ્વાસ્થ્ય', profile: 'મારું ખેતર',
+    assistant: 'સાથીને પૂછો', irrigation: 'સિંચાઈ', disease: 'પાક સ્વાસ્થ્ય', profile: 'મારું ખેતર', satellite: 'સેટેલાઇટ મોનિટરિંગ',
     welcome: 'નમસ્તે', dashboard: 'તમારા ખેતરની માહિતી', forecast: 'હવામાન આગાહી', market: 'બજાર માહિતી',
     recommendations: 'પાક ભલામણો', quickAsk: 'ખેતીનો પ્રશ્ન પૂછો', location: 'ખેતરનું સ્થાન ઉમેરો',
     language: 'ભાષા', save: 'ફેરફારો સાચવો', loading: 'લોડ થઈ રહ્યું છે…', noData: 'હજુ કોઈ માહિતી ઉપલબ્ધ નથી',
@@ -76,7 +76,7 @@ export const words = {
   },
   ml: {
     overview: 'പ്രധാന പേജ്', weather: 'കാലാവസ്ഥ', markets: 'വിപണി വിലകൾ', crops: 'വിള ഉപദേശം',
-    assistant: 'സാഥിയോട് ചോദിക്കുക', irrigation: 'ജലസേചനം', disease: 'വിള ആരോഗ്യം', profile: 'എന്റെ കൃഷിയിടം',
+    assistant: 'സാഥിയോട് ചോദിക്കുക', irrigation: 'ജലസേചനം', disease: 'വിള ആരോഗ്യം', profile: 'എന്റെ കൃഷിയിടം', satellite: 'ഉപഗ്രഹ നിരീക്ഷണം',
     welcome: 'നമസ്കാരം', dashboard: 'നിങ്ങളുടെ കൃഷിയിട വിവരങ്ങൾ', forecast: 'കാലാവസ്ഥാ പ്രവചനം', market: 'വിപണി വിവരങ്ങൾ',
     recommendations: 'വിള നിർദ്ദേശങ്ങൾ', quickAsk: 'കൃഷി സംശയം ചോദിക്കുക', location: 'കൃഷിയിട സ്ഥലം ചേർക്കുക',
     language: 'ഭാഷ', save: 'മാറ്റങ്ങൾ സൂക്ഷിക്കുക', loading: 'ലോഡ് ചെയ്യുന്നു…', noData: 'വിവരങ്ങൾ ലഭ്യമല്ല',
@@ -85,7 +85,7 @@ export const words = {
   },
   pa: {
     overview: 'ਮੁੱਖ ਪੰਨਾ', weather: 'ਮੌਸਮ', markets: 'ਮੰਡੀ ਭਾਅ', crops: 'ਫ਼ਸਲ ਸਲਾਹ',
-    assistant: 'ਸਾਥੀ ਨੂੰ ਪੁੱਛੋ', irrigation: 'ਸਿੰਚਾਈ', disease: 'ਫ਼ਸਲ ਸਿਹਤ', profile: 'ਮੇਰਾ ਖੇਤ',
+    assistant: 'ਸਾਥੀ ਨੂੰ ਪੁੱਛੋ', irrigation: 'ਸਿੰਚਾਈ', disease: 'ਫ਼ਸਲ ਸਿਹਤ', profile: 'ਮੇਰਾ ਖੇਤ', satellite: 'ਸੈਟੇਲਾਈਟ ਨਿਗਰਾਨੀ',
     welcome: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ', dashboard: 'ਤੁਹਾਡੇ ਖੇਤ ਦੀ ਜਾਣਕਾਰੀ', forecast: 'ਮੌਸਮ ਦਾ ਅਨੁਮਾਨ', market: 'ਮੰਡੀ ਜਾਣਕਾਰੀ',
     recommendations: 'ਫ਼ਸਲ ਸੁਝਾਅ', quickAsk: 'ਖੇਤੀ ਸੰਬੰਧੀ ਸਵਾਲ ਪੁੱਛੋ', location: 'ਆਪਣੇ ਖੇਤ ਦੀ ਥਾਂ ਸ਼ਾਮਲ ਕਰੋ',
     language: 'ਭਾਸ਼ਾ', save: 'ਤਬਦੀਲੀਆਂ ਸੁਰੱਖਿਅਤ ਕਰੋ', loading: 'ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…', noData: 'ਅਜੇ ਕੋਈ ਜਾਣਕਾਰੀ ਉਪਲਬਧ ਨਹੀਂ',
@@ -94,7 +94,7 @@ export const words = {
   },
   or: {
     overview: 'ମୁଖ୍ୟ ପୃଷ୍ଠା', weather: 'ପାଣିପାଗ', markets: 'ମଣ୍ଡି ଦର', crops: 'ଫସଲ ପରାମର୍ଶ',
-    assistant: 'ସାଥୀଙ୍କୁ ପଚାରନ୍ତୁ', irrigation: 'ଜଳସେଚନ', disease: 'ଫସଲ ସ୍ୱାସ୍ଥ୍ୟ', profile: 'ମୋର କ୍ଷେତ',
+    assistant: 'ସାଥୀଙ୍କୁ ପଚାରନ୍ତୁ', irrigation: 'ଜଳସେଚନ', disease: 'ଫସଲ ସ୍ୱାସ୍ଥ୍ୟ', profile: 'ମୋର କ୍ଷେତ', satellite: 'ଉପଗ୍ରହ ନିରୀକ୍ଷଣ',
     welcome: 'ନମସ୍କାର', dashboard: 'ଆପଣଙ୍କ କ୍ଷେତର ତଥ୍ୟ', forecast: 'ପାଣିପାଗ ପୂର୍ବାନୁମାନ', market: 'ବଜାର ତଥ୍ୟ',
     recommendations: 'ଫସଲ ସୁପାରିଶ', quickAsk: 'କୃଷି ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ', location: 'ନିଜ କ୍ଷେତର ସ୍ଥାନ ଯୋଡନ୍ତୁ',
     language: 'ଭାଷା', save: 'ପରିବର୍ତ୍ତନ ସାଇତନ୍ତୁ', loading: 'ଲୋଡ୍ ହେଉଛି…', noData: 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ତଥ୍ୟ ଉପଲବ୍ଧ ନାହିଁ',
@@ -103,7 +103,7 @@ export const words = {
   },
   as: {
     overview: 'মুখ্য পৃষ্ঠা', weather: 'বতৰ', markets: 'বজাৰ দৰ', crops: 'শস্য পৰামৰ্শ',
-    assistant: 'সাথীক সোধক', irrigation: 'জলসিঞ্চন', disease: 'শস্যৰ স্বাস্থ্য', profile: 'মোৰ পথাৰ',
+    assistant: 'সাথীক সোধক', irrigation: 'জলসিঞ্চন', disease: 'শস্যৰ স্বাস্থ্য', profile: 'মোৰ পথাৰ', satellite: 'উপগ্ৰহ নিৰীক্ষণ',
     welcome: 'নমস্কাৰ', dashboard: 'আপোনাৰ পথাৰৰ তথ্য', forecast: 'বতৰৰ পূৰ্বাভাস', market: 'বজাৰ তথ্য',
     recommendations: 'শস্যৰ পৰামৰ্শ', quickAsk: 'কৃষি বিষয়ক প্ৰশ্ন সোধক', location: 'পথাৰৰ স্থান যোগ কৰক',
     language: 'ভাষা', save: 'পৰিৱৰ্তন সংৰক্ষণ কৰক', loading: 'লোড হৈ আছে…', noData: 'এতিয়ালৈকে কোনো তথ্য উপলব্ধ নহয়',
@@ -112,7 +112,7 @@ export const words = {
   },
   ur: {
     overview: 'مرکزی صفحہ', weather: 'موسم', markets: 'منڈی کے نرخ', crops: 'فصل کا مشورہ',
-    assistant: 'ساتھی سے پوچھیں', irrigation: 'آبپاشی', disease: 'فصل کی صحت', profile: 'میرا کھیت',
+    assistant: 'ساتھی سے پوچھیں', irrigation: 'آبپاشی', disease: 'فصل کی صحت', profile: 'میرا کھیت', satellite: 'سیٹلائٹ نگرانی',
     welcome: 'آداب', dashboard: 'آپ کے کھیت کی معلومات', forecast: 'موسم کی پیش گوئی', market: 'مارکیٹ کے حالات',
     recommendations: 'فصل کی سفارشات', quickAsk: 'کھیتی کا سوال پوچھیں', location: 'اپنے کھیت کا مقام درج کریں',
     language: 'زبان', save: 'تبدیلیاں محفوظ کریں', loading: 'لوڈ ہو رہا ہے…', noData: 'ابھی کوئی معلومات دستیاب نہیں',
@@ -130,6 +130,7 @@ export const defaultServiceItems = {
   markets: ['Market Prices', 'Search reported mandi prices from government agricultural records.', 'Check prices'],
   schemes: ['Government Schemes', 'Browse source-linked welfare schemes and official application links.', 'View schemes'],
   assistant: ['Ask Saathi', 'Chat or talk with your multilingual AI farming assistant.', 'Ask Saathi'],
+  satellite: ['Satellite Monitoring', 'Track canopy vigor, water stress, and Sentinel-2 vegetation indices.', 'Monitor field'],
   profile: ['My Farm', 'Manage your farm location, acreage, soil type, and crop history.', 'Farm profile']
 };
 

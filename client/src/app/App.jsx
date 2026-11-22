@@ -19,6 +19,7 @@ import AssistantPage from '../pages/AssistantPage.jsx';
 import IrrigationPage from '../pages/IrrigationPage.jsx';
 import DiseasePage from '../pages/DiseasePage.jsx';
 import SchemesPage from '../pages/SchemesPage.jsx';
+import SatellitePage from '../pages/SatellitePage.jsx';
 import ProfilePage from '../pages/ProfilePage.jsx';
 
 if (typeof window !== 'undefined') {
@@ -138,6 +139,7 @@ export default function App() {
       <Route path="assistant" element={<AssistantPage />} />
       <Route path="irrigation" element={<IrrigationPage />} />
       <Route path="disease" element={<DiseasePage />} />
+      <Route path="satellite" element={<SatellitePage />} />
       <Route path="schemes" element={<SchemesPage />} />
       <Route path="profile" element={<ProfilePage />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

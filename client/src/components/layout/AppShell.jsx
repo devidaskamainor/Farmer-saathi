@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   House, Cloud, BadgeIndianRupee, Sprout, MessageCircle, Droplets,
-  Activity, UserRound, Leaf, LogOut, Menu, Globe2, ChevronDown
+  Activity, UserRound, Leaf, LogOut, Menu, Globe2, ChevronDown, Satellite, Landmark
 } from 'lucide-react';
 import { api, errorMessage } from '../../services/api.js';
 import { saveLanguage } from '../../services/languageStorage.js';
@@ -19,6 +19,8 @@ const nav = [
   { to: '/assistant', key: 'assistant', icon: MessageCircle },
   { to: '/irrigation', key: 'irrigation', icon: Droplets },
   { to: '/disease', key: 'disease', icon: Activity },
+  { to: '/satellite', key: 'satellite', icon: Satellite },
+  { to: '/schemes', key: 'schemes', icon: Landmark },
   { to: '/profile', key: 'profile', icon: UserRound }
 ];
 

@@ -12,6 +12,7 @@ import aiRoutes from './routes/ai.js';
 import diseaseRoutes from './routes/disease.js';
 import voiceRoutes from './routes/voice.js';
 import schemeRoutes from './routes/schemes.js';
+import satelliteRoutes from './routes/satellite.js';
 import authRoutes from './routes/auth.js';
 import plannerRoutes from './routes/planner.js';
 import farmHistoryRoutes from './routes/farmHistory.js';
@@ -95,6 +96,7 @@ app.use('/api/mandi', rateLimit({ windowMs: 60 * 1000, limit: 30, standardHeader
 app.use('/api/weather', rateLimit({ windowMs: 60 * 1000, limit: 30, standardHeaders: 'draft-7', legacyHeaders: false }));
 app.use('/api/planner', rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false }));
 app.use('/api/voice', rateLimit({ windowMs: 60 * 1000, limit: 15, standardHeaders: 'draft-7', legacyHeaders: false }));
+app.use('/api/satellite', rateLimit({ windowMs: 60 * 1000, limit: 30, standardHeaders: 'draft-7', legacyHeaders: false }));
 
 app.get('/api/health', async (_req, res, next) => {
   try {
@@ -120,6 +122,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/disease', diseaseRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/schemes', schemeRoutes);
+app.use('/api/satellite', satelliteRoutes);
 
 // Serve production client build if available
 if (existsSync(clientDist)) {

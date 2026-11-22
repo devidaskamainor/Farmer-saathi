@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import {
   MapPin, ArrowRight, Sun, Leaf, CalendarDays, Cloud,
   Droplets, Wind, CloudRain, BadgeIndianRupee, Sprout,
-  MessageCircle, ShieldCheck
+  MessageCircle, ShieldCheck, Satellite
 } from 'lucide-react';
 import useFarm from '../hooks/useFarm.js';
 import useRequest from '../hooks/useRequest.js';
@@ -36,6 +36,7 @@ export default function DashboardPage() {
         {market.loading ? <LoadingBox label="Checking market data…" /> : market.error ? <div className="empty-block"><BadgeIndianRupee size={25} /><p>{market.error}</p><Link to="/markets">Search mandi prices <ArrowRight size={14} /></Link></div> : market.data.records.length ? <><div className="price-list">{market.data.records.slice(0, 4).map((row, i) => <PriceRow key={`${row.market}-${row.commodity}-${i}`} row={row} />)}</div><MetaLine source={market.data.source} time={market.data.fetchedAt} /></> : <div className="empty-block"><BadgeIndianRupee size={25} /><p>No records matched your saved location. Search another district or crop.</p><Link to="/markets">Search market prices <ArrowRight size={14} /></Link></div>}
       </Card>
       <Link to="/crops" className="card feature-card crop-feature"><div className="feature-top"><span className="feature-icon"><Sprout size={20} /></span><span className="pill">PERSONALIZED</span></div><div><h3>Which crop fits your farm?</h3><p>Get ideas based on the details you’ve shared, with missing information called out.</p><span className="text-link">Explore crop advice <ArrowRight size={16} /></span></div></Link>
+      <Link to="/satellite" className="card feature-card satellite-feature"><div className="feature-top"><span className="feature-icon"><Satellite size={20} /></span><span className="pill pill-soft">SENTINEL-2 MSI</span></div><div><h3>Satellite Crop Monitoring</h3><p>Track live NDVI canopy vigor, water deficit, and 3x3 zoning from space.</p><span className="text-link">Monitor farm plot <ArrowRight size={16} /></span></div></Link>
       <Link to="/assistant" className="card feature-card ask-feature"><div className="feature-top"><span className="feature-icon"><MessageCircle size={20} /></span><span className="pill pill-soft">HERE TO HELP</span></div><div><h3>A question came up?</h3><p>Ask in your preferred language about crops, weather, soil or farm care.</p><span className="text-link">Ask Saathi <ArrowRight size={16} /></span></div></Link>
       <Card className="tip-card"><div className="tip-icon"><ShieldCheck size={20} /></div><div><span className="eyebrow">A NOTE ON ADVICE</span><p>Weather and market information shows its source and date. AI suggestions are guidance, not a confirmed diagnosis or local expert assessment.</p></div></Card>
     </div>

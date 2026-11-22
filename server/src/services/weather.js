@@ -132,7 +132,7 @@ async function getOpenMeteoWeather(location, forecastDays = 5) {
   };
 }
 
-async function geocodeIndiaLocation(location) {
+export async function geocodeIndiaLocation(location) {
   const parts = String(location).split(',').map(part => part.trim()).filter(Boolean);
   const candidates = parts.length > 1
     ? [`${parts[0]}, ${parts.at(-1)}`, `${parts.at(-2)}, ${parts.at(-1)}`, parts[0], parts.at(-2)]
