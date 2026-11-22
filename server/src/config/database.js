@@ -30,8 +30,12 @@ export function getDatabasePool() {
 
 export async function checkDatabaseConnection() {
   if (!process.env.DATABASE_URL) return false;
-  await getDatabasePool().query('select 1');
-  return true;
+  try {
+    await getDatabasePool().query('select 1');
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function closeDatabasePool() {
