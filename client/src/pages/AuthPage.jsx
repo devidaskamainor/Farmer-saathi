@@ -14,7 +14,8 @@ import Field from '../components/common/Field.jsx';
 import ThemePicker from '../components/common/ThemePicker.jsx';
 import { GoogleIcon, FacebookIcon } from '../components/auth/SocialIcons.jsx';
 import SocialAccountModal, { saveStoredSocialAccount } from '../components/auth/SocialAccountModal.jsx';
-import AuthHelp, { getBrowserHelpLanguage } from '../components/auth/AuthHelp.jsx';
+import AuthHelp from '../components/auth/AuthHelp.jsx';
+import { getBrowserHelpLanguage } from '../utils/authHelpUtils.js';
 
 function splitList(value) {
   return value.split(',').map(part => part.trim()).filter(Boolean).slice(0, 20);

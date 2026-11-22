@@ -188,6 +188,12 @@ export async function speakText(text, language) {
   const voice = await waitForVoice(targetLanguage);
   if (requestId !== speechRequestId) return { ok: false, reason: 'cancelled' };
 
+  // Never speak non-English regional languages in an English voice accent
+  if (targetLanguage !== 'en' && !voice) {
+    console.warn(`No regional device speech synthesis voice installed for language '${targetLanguage}'.`);
+    return { ok: false, reason: 'voice-unavailable' };
+  }
+
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = speechLocale(targetLanguage);
   if (voice) utterance.voice = voice;

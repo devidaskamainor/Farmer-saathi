@@ -1,3 +1,6 @@
+/// <reference lib="webworker" />
+/* eslint-env serviceworker */
+
 const CACHE_NAME = 'farmer-saathi-shell-v2';
 const SHELL_URLS = ['/', '/index.html'];
 

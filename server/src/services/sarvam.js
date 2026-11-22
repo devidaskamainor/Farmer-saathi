@@ -99,6 +99,7 @@ async function synthesizeSingleChunk(chunkText, voice, apiKey) {
     headers: { 'api-subscription-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       text: chunkText,
+      target_language_code: voice.languageCode,
       language_code: voice.languageCode,
       model: voice.model,
       speaker: voice.speaker,
@@ -125,16 +126,18 @@ async function synthesizeSingleChunk(chunkText, voice, apiKey) {
 
 export async function synthesizeSpeech(text, voice) {
   const apiKey = getApiKey();
-  const chunks = splitTextIntoSpeechChunks(text, 500);
+  const chunks = splitTextIntoSpeechChunks(text, 1500);
 
   if (chunks.length <= 1) {
     return synthesizeSingleChunk(chunks[0] || text, voice, apiKey);
   }
 
-  // Synthesize chunks in parallel for immediate, low-latency audio response
-  const buffers = await Promise.all(
-    chunks.map(chunk => synthesizeSingleChunk(chunk, voice, apiKey))
-  );
+  // Synthesize chunks sequentially to prevent concurrency rate limits on Sarvam API
+  const buffers = [];
+  for (const chunk of chunks) {
+    const audio = await synthesizeSingleChunk(chunk, voice, apiKey);
+    buffers.push(audio);
+  }
   return concatenateWavBuffers(buffers);
 }
 

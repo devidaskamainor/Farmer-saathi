@@ -1,3 +1,6 @@
+/// <reference lib="webworker" />
+/* eslint-env serviceworker */
+
 // Firebase Cloud Messaging Service Worker
 self.addEventListener('push', event => {
   let data = {};

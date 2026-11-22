@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Leaf, LoaderCircle, ShieldCheck, FileWarning } from 'lucide-react';
 import { api, errorMessage } from '../services/api.js';
 import { readSavedLanguage, localizedCopy } from '../services/languageStorage.js';
-import { getBrowserHelpLanguage } from '../components/auth/AuthHelp.jsx';
+import { getBrowserHelpLanguage } from '../utils/authHelpUtils.js';
 import { passwordResetCopy } from '../config/authTranslations.js';
 import Field from '../components/common/Field.jsx';
 

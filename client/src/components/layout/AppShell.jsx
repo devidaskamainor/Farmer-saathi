@@ -11,7 +11,7 @@ import NotificationBell from '../common/NotificationBell.jsx';
 import { languageOptions } from '../../config/languages.js';
 import { words } from '../../config/translations.js';
 
-export const nav = [
+const nav = [
   { to: '/dashboard', key: 'overview', icon: House },
   { to: '/weather', key: 'weather', icon: Cloud },
   { to: '/markets', key: 'markets', icon: BadgeIndianRupee },

@@ -5,7 +5,7 @@ import { api, errorMessage } from '../services/api.js';
 import { applyTheme, getSavedTheme } from '../services/theme.js';
 import { getLanguageDefinition } from '../config/languages.js';
 import { readSavedLanguage, saveLanguage, supportedLanguages } from '../services/languageStorage.js';
-import { getBrowserHelpLanguage } from '../components/auth/AuthHelp.jsx';
+import { getBrowserHelpLanguage } from '../utils/authHelpUtils.js';
 import AppShell from '../components/layout/AppShell.jsx';
 import AuthPage from '../pages/AuthPage.jsx';
 import EmailVerificationPage from '../pages/EmailVerificationPage.jsx';
@@ -144,8 +144,3 @@ export default function App() {
     </Route>
   </Routes>;
 }
-
-// Re-exports for modularity and backwards compatibility
-export { default as useFarm } from '../hooks/useFarm.js';
-export { default as useRequest } from '../hooks/useRequest.js';
-export { default as AppShell } from '../components/layout/AppShell.jsx';

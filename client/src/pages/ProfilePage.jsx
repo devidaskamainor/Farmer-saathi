@@ -10,7 +10,7 @@ import Field from '../components/common/Field.jsx';
 import ErrorNotice from '../components/common/ErrorNotice.jsx';
 import FarmHistoryPanel from '../components/dashboard/FarmHistoryPanel.jsx';
 
-export function farmerToForm(farmer = {}) {
+function farmerToForm(farmer = {}) {
   return {
     name: farmer.name || '',
     state: farmer.state || '',
