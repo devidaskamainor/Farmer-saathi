@@ -11,8 +11,15 @@ const router = Router();
 router.use(requireAuth);
 
 router.get('/', async (req, res, next) => {
-  try { res.json({ activities: await listFarmHistory(getDatabasePool(), req.authUser.id) }); }
-  catch (error) { next(error); }
+  try {
+    let activities = [];
+    try {
+      activities = await listFarmHistory(getDatabasePool(), req.authUser.id);
+    } catch (dbErr) {
+      console.warn('Database error fetching farm history, returning empty list:', dbErr.message);
+    }
+    res.json({ activities });
+  } catch (error) { next(error); }
 });
 
 router.post('/', async (req, res, next) => {

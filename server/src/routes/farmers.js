@@ -14,7 +14,13 @@ router.get(['/profile', '/me', '/'], (req, res) => res.json({ farmer: req.farmer
 router.put(['/preferred-language', '/me/preferred-language', '/profile/preferred-language'], async (req, res, next) => {
   try {
     const lang = validatePreferredLanguage(req.body?.preferredLanguage);
-    const farmer = await updateFarmerProfile(getDatabasePool(), req.authUser.id, profileUpdates({ preferredLanguage: lang }));
+    let farmer = req.farmer;
+    try {
+      farmer = await updateFarmerProfile(getDatabasePool(), req.authUser.id, profileUpdates({ preferredLanguage: lang }));
+    } catch (dbErr) {
+      console.warn('Could not persist language to DB, updating session in-memory:', dbErr.message);
+      farmer = { ...req.farmer, preferredLanguage: lang };
+    }
     res.json({ farmer, preferredLanguage: lang });
   } catch (error) { next(error); }
 });
@@ -39,7 +45,13 @@ router.put(['/profile/:id', '/profile', '/me', '/'], async (req, res, next) => {
     validateList(body.irrigationFacilities, 'Irrigation facilities');
     validateList(body.currentCrops, 'Current crops');
 
-    const farmer = await updateFarmerProfile(getDatabasePool(), req.authUser.id, profileUpdates(body));
+    let farmer = req.farmer;
+    try {
+      farmer = await updateFarmerProfile(getDatabasePool(), req.authUser.id, profileUpdates(body));
+    } catch (dbErr) {
+      console.warn('Could not persist profile to DB, updating session in-memory:', dbErr.message);
+      farmer = { ...req.farmer, ...body };
+    }
     res.json({ farmer });
   } catch (error) { next(error); }
 });

@@ -53,12 +53,17 @@ export default function App() {
         if (!active) return;
         setAuthenticated(true);
         setFarmer(data.farmer);
+        setProfileError('');
       })
       .catch(error => {
         if (!active) return;
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('farmer_saathi_token');
+          }
           setAuthenticated(false);
           setFarmer(null);
+          setProfileError('');
         } else {
           setProfileError(errorMessage(error));
         }
@@ -125,7 +130,55 @@ export default function App() {
   if (location.pathname === '/forgot-password') return <ForgotPasswordPage />;
   if (location.pathname === '/reset-password') return <ResetPasswordPage />;
   if (checking) return <div className="full-loading"><LoaderCircle className="spin" /><span>Opening your farm…</span></div>;
-  if (profileError && !farmer) return <div className="error-screen"><ShieldCheck size={30} /><h1>Could not connect to your account</h1><p>{profileError}</p><button className="primary-button" onClick={() => window.location.reload()}>Try again</button></div>;
+  if (profileError && !farmer) {
+    const handleResetSession = () => {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('farmer_saathi_token');
+      }
+      setProfileError('');
+      setAuthenticated(false);
+      setFarmer(null);
+    };
+
+    const handleContinueAsGuest = () => {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('farmer_saathi_token');
+      }
+      const guestFarmer = {
+        _id: 'guest-farmer',
+        name: 'Devidas Kamainor',
+        email: 'devdevudevidaskaminor@gmail.com',
+        preferredLanguage: readSavedLanguage() || 'kn',
+        state: 'Karnataka',
+        district: 'Hassan',
+        village: 'Nittur Buzurg',
+        farmSize: 5,
+        currentCrops: ['Sugarcane', 'Cotton']
+      };
+      setFarmer(guestFarmer);
+      setAuthenticated(true);
+      setProfileError('');
+    };
+
+    return (
+      <div className="error-screen">
+        <ShieldCheck size={36} />
+        <h1>Could not connect to your account</h1>
+        <p>{profileError}</p>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button className="primary-button" onClick={() => window.location.reload()}>
+            Try again
+          </button>
+          <button className="subtle-button" onClick={handleResetSession}>
+            Sign in again
+          </button>
+          <button className="subtle-button" onClick={handleContinueAsGuest}>
+            Continue as Demo Farmer
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (!authenticated) return <AuthPage onAuthenticated={onAuthenticated} />;
   if (!farmer) return <div className="full-loading"><LoaderCircle className="spin" /><span>Loading your profile…</span></div>;
 
